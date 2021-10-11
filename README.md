@@ -7,7 +7,7 @@
 ---
 
 **The best of Viper & Cobra combined.**  
-Ready to go solution for configurable (by environment variables, config, command-line flags) CLI programs.
+Ready to go solution for configurable CLI programs.
 
 ## How to install?
 
@@ -91,4 +91,8 @@ func main() {
 - or **command-line flags**
   ```shell
   go run main.go --sample-config-field="some value"
-  ```
+  ``` 
+
+## Detailed configuration options
+
+TODO.
