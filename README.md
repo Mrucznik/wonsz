@@ -42,7 +42,7 @@ func Get() *Config {
 }
 
 func init() {
-	wonsz.InitializeConfig(cfg)
+	wonsz.InitializeConfig(cfg, wonsz.ConfigOpts{})
 }
 ```
 
