@@ -28,13 +28,13 @@ func ConvertFromCamelCase(text string) (string, string) {
 	newLen := len(text) + len(separators)
 	dashed := make([]rune, newLen)
 	underscored := make([]rune, newLen)
-	insrtSeps := 0
+	insertedSeparators := 0
 	for i, letter := range text {
-		idx := i + insrtSeps
+		idx := i + insertedSeparators
 		if _, ok := separators[i]; ok {
 			dashed[idx] = '-'
 			underscored[idx] = '_'
-			insrtSeps++
+			insertedSeparators++
 			idx++
 		}
 		lowered := unicode.ToLower(letter)
