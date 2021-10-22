@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/sevlyar/retag"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"reflect"
-	"strings"
 )
 
 var cfgOpts ConfigOpts
@@ -37,7 +37,7 @@ func InitializeViper() {
 		logrus.Infof("Using config file: %v.", viper.ConfigFileUsed())
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(&cfg); err != nil {
 		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
 	}
 }
@@ -47,7 +47,7 @@ func bindEnvsAndSetDefaults() {
 	for i := 0; i < el.NumField(); i++ {
 		field := el.Field(i)
 		defaultVal := field.Tag.Get("default")
-		mapping := CamelCaseToUnderscored(field.Name)
+		mapping := field.Tag.Get("mapstructure")
 
 		if defaultVal != "" {
 			viper.SetDefault(mapping, defaultVal)
@@ -62,18 +62,18 @@ func bindEnvsAndSetDefaults() {
 
 func Wonsz(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
 	cfgOpts = options
-	cfg = config
+	cfg = retag.Convert(config, MapstructureRetagger{})
 
 	cobra.OnInitialize(InitializeViper)
 
-	confType := reflect.TypeOf(config).Elem()
+	confType := reflect.TypeOf(cfg).Elem()
 	for i := 0; i < confType.NumField(); i++ {
 		field := confType.Field(i)
 		if field.Anonymous {
 			continue
 		}
-		dashedName := strings.ToLower(CamelCaseToDashed(field.Name))
-		underscoredName := strings.ToLower(CamelCaseToUnderscored(field.Name))
+		dashedName := CamelCaseToDashedLowered(field.Name)
+		underscoredName := CamelCaseToUnderscoredLowered(field.Name)
 
 		flags := rootCmd.PersistentFlags()
 		usageHint := field.Tag.Get("usage")

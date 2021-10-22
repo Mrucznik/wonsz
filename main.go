@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 type Config struct {
-	TestString string `mapstructure:"test_string"`
-	TestInt    int    `mapstructure:"test_int"`
+	TestString string
+	TestInt    int
 	TestBool   bool
 }
 
@@ -24,12 +25,16 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	config = &Config{}
-	Wonsz(config, rootCmd, ConfigOpts{
+	err := Wonsz(config, rootCmd, ConfigOpts{
 		Prefix:      "WONSZ",
 		ConfigPaths: []string{"."},
 		ConfigType:  "toml",
 		ConfigName:  "wonsz",
 	})
+	if err != nil {
+		logrus.WithError(err).Fatal("cannot create config")
+		return
+	}
 
 	rootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/.main.yaml)")
 

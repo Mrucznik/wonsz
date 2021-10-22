@@ -2,15 +2,15 @@ package main
 
 import "unicode"
 
-func CamelCaseToDashed(text string) string {
-	return CamelCaseToSeparators(text, '-')
+func CamelCaseToDashedLowered(text string) string {
+	return CamelCaseToSeparatorsLowered(text, '-')
 }
 
-func CamelCaseToUnderscored(text string) string {
-	return CamelCaseToSeparators(text, '_')
+func CamelCaseToUnderscoredLowered(text string) string {
+	return CamelCaseToSeparatorsLowered(text, '_')
 }
 
-func CamelCaseToSeparators(text string, separator rune) string {
+func CamelCaseToSeparatorsLowered(text string, separator rune) string {
 	separators := getDesiredSeparatorPositions(text)
 
 	newLen := len(text) + len(separators)
@@ -23,7 +23,8 @@ func CamelCaseToSeparators(text string, separator rune) string {
 			insertedSeparators++
 			idx++
 		}
-		converted[idx] = letter
+		lowered := unicode.ToLower(letter)
+		converted[idx] = lowered
 	}
 	return string(converted)
 }
