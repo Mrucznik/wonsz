@@ -1,4 +1,4 @@
-package wonsz
+package main
 
 import (
 	"reflect"

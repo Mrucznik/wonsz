@@ -1,57 +1,79 @@
-package wonsz
+package main
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"reflect"
 )
 
-type IConfig interface {
-}
-
-type Config struct {
-	AlwaysInConfig string `sometag:"xd" boolTag:""`
-}
+var cfgOpts ConfigOpts
+var cfg interface{}
 
 type ConfigOpts struct {
-	Prefix string
+	Prefix      string
+	ConfigPaths []string
+	ConfigType  string
+	ConfigName  string
 }
 
-func InitializeConfig(config IConfig, _ ...ConfigOpts) error {
-	// TODO
-	// 1. get all field names
-	// 2. get all tags for fields
-	// 3. bind env variables - XXX_XXX_XXX
-	// 4. create flags --xxx-xxx-xxx
-	// 5. load config
+func InitializeViper() {
+	viper.SetEnvPrefix(cfgOpts.Prefix)
 
-	confType := reflect.TypeOf(config)
-	fmt.Println("type: ", confType)
+	for _, path := range cfgOpts.ConfigPaths {
+		viper.AddConfigPath(path)
+	}
+	viper.SetConfigType(cfgOpts.ConfigType)
+	viper.SetConfigName(cfgOpts.ConfigName)
 
-	// get all field names & tags
+	bindEnvsAndSetDefaults()
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		logrus.Infof("Config file not found.")
+	} else {
+		logrus.Infof("Using config file: %v.", viper.ConfigFileUsed())
+	}
+
+	if err := viper.Unmarshal(&config); err != nil {
+		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
+	}
+}
+
+func bindEnvsAndSetDefaults() {
+	el := reflect.TypeOf(cfg).Elem()
+	for i := 0; i < el.NumField(); i++ {
+		field := el.Field(i)
+		defaultVal := field.Tag.Get("default")
+		_, mapping := ConvertFromCamelCase(field.Name)
+
+		if defaultVal != "" {
+			viper.SetDefault(mapping, defaultVal)
+		} else {
+			err := viper.BindEnv(mapping)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		}
+	}
+}
+
+func Wonsz(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
+	cfgOpts = options
+	cfg = config
+
+	cobra.OnInitialize(InitializeViper)
+
+	confType := reflect.TypeOf(config).Elem()
 	for i := 0; i < confType.NumField(); i++ {
 		field := confType.Field(i)
 		if field.Anonymous {
 			continue
 		}
-		//camelCaseName := field.Name
 		dashedName, underscoredName := ConvertFromCamelCase(field.Name)
 
-		// 3. bind env variables - XXX_XXX_XXX
-		if defaultVal, ok := field.Tag.Lookup("default"); ok {
-			viper.SetDefault(underscoredName, defaultVal)
-		} else {
-			err := viper.BindEnv(underscoredName)
-			if err != nil {
-				// TODO: better error
-				return err
-			}
-		}
-
-		// 4. create flags --xxx-xxx-xxx
-		rootCommand := cobra.Command{}
-		flags := rootCommand.PersistentFlags()
+		flags := rootCmd.PersistentFlags()
 		usageHint := field.Tag.Get("usage")
 		if shortcut, ok := field.Tag.Lookup("shortcut"); ok {
 			switch field.Type.Kind() {
@@ -75,7 +97,7 @@ func InitializeConfig(config IConfig, _ ...ConfigOpts) error {
 				flags.BoolP(dashedName, shortcut, false, usageHint)
 			case reflect.Array, reflect.Slice, reflect.Map:
 				//TODO: arrays
-				fmt.Println("arrays not supported yet.")
+				logrus.Error("arrays not supported yet.")
 			default:
 				continue
 			}
@@ -101,30 +123,20 @@ func InitializeConfig(config IConfig, _ ...ConfigOpts) error {
 				flags.Bool(dashedName, false, usageHint)
 			case reflect.Array, reflect.Slice, reflect.Map:
 				//TODO: arrays
-				fmt.Println("arrays not supported yet.")
+				logrus.Error("arrays not supported yet.")
 			default:
 				continue
 			}
 		}
 
-		err := viper.BindPFlag(underscoredName, flags.Lookup(dashedName))
+		targetFlag := flags.Lookup(dashedName)
+		if targetFlag == nil {
+			return fmt.Errorf("nie ma flag")
+		}
+		err := viper.BindPFlag(underscoredName, targetFlag)
 		if err != nil {
-			// TODO: better error
 			return err
 		}
-
-		// get all tags
-		//for j, key := range GetTagsForField(field) {
-		//	fmt.Printf("tag %d: %+v\n", j, key)
-		//}
 	}
-
-	// 5. load config
-	err := viper.Unmarshal(&config)
-	if err != nil {
-		// TODO: better error
-		return err
-	}
-
 	return nil
 }

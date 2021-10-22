@@ -1,15 +1,15 @@
-package wonsz
+package main
 
 import (
+	"github.com/spf13/cobra"
 	"testing"
 )
 
 type TestConfig struct {
-	Config
-
-	TestField string `name:"TestString" booltag:"" kek01:"pur"`
+	AlwaysInConfig string `sometag:"xd" boolTag:""`
+	TestField      string `name:"TestString" booltag:"" kek01:"pur"`
 }
 
 func TestInitializeConfig(t *testing.T) {
-	InitializeConfig(TestConfig{}, nil)
+	Wonsz(TestConfig{}, &cobra.Command{}, ConfigOpts{})
 }

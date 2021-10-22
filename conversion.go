@@ -1,8 +1,6 @@
-package wonsz
+package main
 
 import "unicode"
-
-// TODO: tests
 
 // ConvertFromCamelCase convert string from camel case format to 2 other formats: dash separated & underscore separated format
 func ConvertFromCamelCase(text string) (string, string) {
