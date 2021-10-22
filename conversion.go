@@ -2,8 +2,33 @@ package main
 
 import "unicode"
 
-// ConvertFromCamelCase convert string from camel case format to 2 other formats: dash separated & underscore separated format
-func ConvertFromCamelCase(text string) (string, string) {
+func CamelCaseToDashed(text string) string {
+	return CamelCaseToSeparators(text, '-')
+}
+
+func CamelCaseToUnderscored(text string) string {
+	return CamelCaseToSeparators(text, '_')
+}
+
+func CamelCaseToSeparators(text string, separator rune) string {
+	separators := getDesiredSeparatorPositions(text)
+
+	newLen := len(text) + len(separators)
+	converted := make([]rune, newLen)
+	insertedSeparators := 0
+	for i, letter := range text {
+		idx := i + insertedSeparators
+		if _, ok := separators[i]; ok {
+			converted[idx] = separator
+			insertedSeparators++
+			idx++
+		}
+		converted[idx] = letter
+	}
+	return string(converted)
+}
+
+func getDesiredSeparatorPositions(text string) map[int]struct{} {
 	separators := map[int]struct{}{}
 	longUpper := false
 	for i, j := 0, 1; j < len(text); i, j = i+1, j+1 {
@@ -22,22 +47,5 @@ func ConvertFromCamelCase(text string) (string, string) {
 			longUpper = false
 		}
 	}
-
-	newLen := len(text) + len(separators)
-	dashed := make([]rune, newLen)
-	underscored := make([]rune, newLen)
-	insertedSeparators := 0
-	for i, letter := range text {
-		idx := i + insertedSeparators
-		if _, ok := separators[i]; ok {
-			dashed[idx] = '-'
-			underscored[idx] = '_'
-			insertedSeparators++
-			idx++
-		}
-		lowered := unicode.ToLower(letter)
-		dashed[idx] = lowered
-		underscored[idx] = lowered
-	}
-	return string(dashed), string(underscored)
+	return separators
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"reflect"
+	"strings"
 )
 
 var cfgOpts ConfigOpts
@@ -46,7 +47,7 @@ func bindEnvsAndSetDefaults() {
 	for i := 0; i < el.NumField(); i++ {
 		field := el.Field(i)
 		defaultVal := field.Tag.Get("default")
-		_, mapping := ConvertFromCamelCase(field.Name)
+		mapping := CamelCaseToUnderscored(field.Name)
 
 		if defaultVal != "" {
 			viper.SetDefault(mapping, defaultVal)
@@ -71,7 +72,8 @@ func Wonsz(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error
 		if field.Anonymous {
 			continue
 		}
-		dashedName, underscoredName := ConvertFromCamelCase(field.Name)
+		dashedName := strings.ToLower(CamelCaseToDashed(field.Name))
+		underscoredName := strings.ToLower(CamelCaseToUnderscored(field.Name))
 
 		flags := rootCmd.PersistentFlags()
 		usageHint := field.Tag.Get("usage")
