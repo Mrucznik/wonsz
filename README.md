@@ -52,80 +52,64 @@ go get -d github.com/Mrucznik/wonsz
 ## How to use?
 
 
-### Create a config struct in your code
+### Simplest application
 ```go
-// config/config.go
-package config
-
-import (
-	"github.com/Mrucznik/wonsz"
-)
-
-type Config struct {
-	wonsz.Config
-	
-	// Here we declare fields with additional configuration tags
-	SampleConfigField string `mapstructure:"sample_config_field" default:"default value"`
-}
-
-var cfg *Config
-
-func Get() *Config {
-	return cfg
-}
-
-func init() {
-	wonsz.InitializeConfig(cfg, wonsz.ConfigOpts{})
-}
-```
-
-### Initialize config in your cobra application
-
-```go
-package config
-
-import "github.com/Mrucznik/wonsz"
-
-```
-
-### Use configuration fields in your code
-```go
+// main.go file
 package main
 
-import "yourapp/config"
+import (
+	"fmt"
+	"github.com/Mrucznik/wonsz"
+	"github.com/spf13/cobra"
+)
 
-var cfg = config.Get()
+var config *Configuration
+type Configuration struct {	
+	// Here we declare configuration fields. No need to add any tags.
+	SnakeName string
+}
 
 func main() {
-	fmt.Println(cfg.SampleConfigField)	
+	wonsz.Wonsz(config, &cobra.Command{Run: execute}, wonsz.ConfigOpts{})
+}
+
+func execute(_ *cobra.Command, _ []string) {
+    fmt.Printf("Application config: %+v\n", config)
 }
 ```
+This is the simplest example, more detailed [you will find here](example/example.go).
 
 ### Configure and run your application with:
+- **default struct values**
+  ```cgo
+  config := &Config{
+      SnakeName: "nope-rope",
+  }
+  ```
 - **configuration files**
   - *config.json*
     ```json
     {
-      "sample_config_field": "some value" 
+      "snake_name": "hazard spaghetti" 
     }
     ```
   - *config.yaml*
     ```yaml
-    sample_config_field: "some value"
+    snake_name: "judgemental shoelace"
     ``` 
   - *config.toml*
     ```toml
-    sample_config_field = "some value"
+    snake_name = "slippery tube dude"
     ```
 - **environment variables**
   ```shell
-  SAMPLE_CONFIG_FIELD="some value" go run main.go
+  SNAKE_NAME="caution ramen" go run main.go
   ```
-- or **command-line flags**
+- **command-line flags**
   ```shell
-  go run main.go --sample-config-field="some value"
+  go run main.go --snake_name="danger noodle"
   ``` 
 
 ## Detailed configuration options
 
-TODO.
+You can find more information by checking out [example app](example/example.go).
