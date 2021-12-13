@@ -44,6 +44,7 @@ func GetCommand() *cobra.Command {
 }
 
 // TODO: Here some description
+// TODO: maybe rename to BindConfig
 func Wonsz(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
 	cfgOpts = &options
 	cfg = retag.Convert(config, mapstructureRetagger{})
