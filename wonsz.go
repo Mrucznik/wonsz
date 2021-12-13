@@ -9,6 +9,7 @@ import (
 	"reflect"
 )
 
+// TODO: maybe ConfigOpts as variadic parameters?
 var cfgOpts *ConfigOpts
 var cfg interface{}
 
@@ -43,87 +44,98 @@ func GetCommand() *cobra.Command {
 	return &cobra.Command{}
 }
 
-// TODO: Here some description
-// TODO: maybe rename to BindConfig
-func Wonsz(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
+// BindConfig binds configuration structure to config file, environment variables and cobra command flags.
+// The config parameter should be a pointer to configuration structure.
+// You can pass nil to rootCmd, if you don't want to bind cobra command flags with config.
+func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
+	if !(reflect.TypeOf(config).Kind() == reflect.Ptr && reflect.TypeOf(config).Elem().Kind() == reflect.Struct) {
+		// TODO: Better error handling
+		return fmt.Errorf("config parameter is not a pointer to a structure")
+	}
+
 	cfgOpts = &options
 	cfg = retag.Convert(config, mapstructureRetagger{})
 
-	cobra.OnInitialize(initializeViper)
+	//TODO: maybe split this to smaller functions
+	if rootCmd == nil {
+		initializeViper()
+	} else {
+		cobra.OnInitialize(initializeViper)
 
-	confType := reflect.TypeOf(cfg).Elem()
-	for i := 0; i < confType.NumField(); i++ {
-		field := confType.Field(i)
-		if field.Anonymous {
-			continue
-		}
-		dashedName := camelCaseToDashedLowered(field.Name)
-		underscoredName := camelCaseToUnderscoredLowered(field.Name)
-
-		flags := rootCmd.PersistentFlags()
-		usageHint := field.Tag.Get("usage")
-		if shortcut, ok := field.Tag.Lookup("shortcut"); ok {
-			switch field.Type.Kind() {
-			case reflect.String:
-				flags.StringP(dashedName, shortcut, "", usageHint)
-			case reflect.Int64:
-				flags.Int64P(dashedName, shortcut, 0, usageHint)
-			case reflect.Int32:
-				flags.Int32P(dashedName, shortcut, 0, usageHint)
-			case reflect.Int16:
-				flags.Int16P(dashedName, shortcut, 0, usageHint)
-			case reflect.Int8:
-				flags.Int8P(dashedName, shortcut, 0, usageHint)
-			case reflect.Int:
-				flags.IntP(dashedName, shortcut, 0, usageHint)
-			case reflect.Float64:
-				flags.Float64P(dashedName, shortcut, 0, usageHint)
-			case reflect.Float32:
-				flags.Float32P(dashedName, shortcut, 0, usageHint)
-			case reflect.Bool:
-				flags.BoolP(dashedName, shortcut, false, usageHint)
-			case reflect.Array, reflect.Slice, reflect.Map:
-				//TODO: arrays
-				return fmt.Errorf("arrays not supported yet")
-			default:
+		confType := reflect.TypeOf(cfg).Elem()
+		for i := 0; i < confType.NumField(); i++ {
+			field := confType.Field(i)
+			if field.Anonymous {
 				continue
 			}
-		} else {
-			switch field.Type.Kind() {
-			case reflect.String:
-				flags.String(dashedName, "", usageHint)
-			case reflect.Int64:
-				flags.Int64(dashedName, 0, usageHint)
-			case reflect.Int32:
-				flags.Int32(dashedName, 0, usageHint)
-			case reflect.Int16:
-				flags.Int16(dashedName, 0, usageHint)
-			case reflect.Int8:
-				flags.Int8(dashedName, 0, usageHint)
-			case reflect.Int:
-				flags.Int(dashedName, 0, usageHint)
-			case reflect.Float64:
-				flags.Float64(dashedName, 0, usageHint)
-			case reflect.Float32:
-				flags.Float32(dashedName, 0, usageHint)
-			case reflect.Bool:
-				flags.Bool(dashedName, false, usageHint)
-			case reflect.Array, reflect.Slice, reflect.Map:
-				//TODO: arrays
-				return fmt.Errorf("arrays not supported yet")
-			default:
-				continue
-			}
-		}
+			dashedName := camelCaseToDashedLowered(field.Name)
+			underscoredName := camelCaseToUnderscoredLowered(field.Name)
 
-		targetFlag := flags.Lookup(dashedName)
-		if targetFlag == nil {
-			// TODO: better errors
-			return fmt.Errorf("nie ma flag")
-		}
-		err := viper.BindPFlag(underscoredName, targetFlag)
-		if err != nil {
-			return err
+			flags := rootCmd.PersistentFlags()
+			usageHint := field.Tag.Get("usage")
+			if shortcut, ok := field.Tag.Lookup("shortcut"); ok {
+				switch field.Type.Kind() {
+				case reflect.String:
+					flags.StringP(dashedName, shortcut, "", usageHint)
+				case reflect.Int64:
+					flags.Int64P(dashedName, shortcut, 0, usageHint)
+				case reflect.Int32:
+					flags.Int32P(dashedName, shortcut, 0, usageHint)
+				case reflect.Int16:
+					flags.Int16P(dashedName, shortcut, 0, usageHint)
+				case reflect.Int8:
+					flags.Int8P(dashedName, shortcut, 0, usageHint)
+				case reflect.Int:
+					flags.IntP(dashedName, shortcut, 0, usageHint)
+				case reflect.Float64:
+					flags.Float64P(dashedName, shortcut, 0, usageHint)
+				case reflect.Float32:
+					flags.Float32P(dashedName, shortcut, 0, usageHint)
+				case reflect.Bool:
+					flags.BoolP(dashedName, shortcut, false, usageHint)
+				case reflect.Array, reflect.Slice, reflect.Map:
+					//TODO: arrays
+					return fmt.Errorf("arrays not supported yet")
+				default:
+					continue
+				}
+			} else {
+				switch field.Type.Kind() {
+				case reflect.String:
+					flags.String(dashedName, "", usageHint)
+				case reflect.Int64:
+					flags.Int64(dashedName, 0, usageHint)
+				case reflect.Int32:
+					flags.Int32(dashedName, 0, usageHint)
+				case reflect.Int16:
+					flags.Int16(dashedName, 0, usageHint)
+				case reflect.Int8:
+					flags.Int8(dashedName, 0, usageHint)
+				case reflect.Int:
+					flags.Int(dashedName, 0, usageHint)
+				case reflect.Float64:
+					flags.Float64(dashedName, 0, usageHint)
+				case reflect.Float32:
+					flags.Float32(dashedName, 0, usageHint)
+				case reflect.Bool:
+					flags.Bool(dashedName, false, usageHint)
+				case reflect.Array, reflect.Slice, reflect.Map:
+					//TODO: arrays
+					return fmt.Errorf("arrays not supported yet")
+				default:
+					continue
+				}
+			}
+
+			targetFlag := flags.Lookup(dashedName)
+			if targetFlag == nil {
+				// TOSDO: better errors
+				return fmt.Errorf("nie ma flag")
+			}
+			err := viper.BindPFlag(underscoredName, targetFlag)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

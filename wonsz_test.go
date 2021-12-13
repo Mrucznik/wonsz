@@ -11,7 +11,7 @@ type TestConfig struct {
 }
 
 func TestInitializeConfig(t *testing.T) {
-	err := Wonsz(TestConfig{}, &cobra.Command{}, ConfigOpts{})
+	err := BindConfig(TestConfig{}, &cobra.Command{}, ConfigOpts{})
 	if err != nil {
 		t.Fatal(err)
 	}

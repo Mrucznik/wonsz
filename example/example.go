@@ -41,9 +41,9 @@ func init() {
 		// Here you can specify some default values, when there is no configuration available.
 		SnakeName: "nope-rope",
 	}
-	err := wonsz.Wonsz(config, rootCmd,
+	err := wonsz.BindConfig(config, rootCmd,
 		// You can specify some additional options to Wonsz, so configuration settings can better meet your needs.
-		// If you want to go with default, you can pass nil here.
+		// If you want to go with default, you can pass empty struct here.
 		wonsz.ConfigOpts{
 			EnvPrefix:   "WONSZ",
 			ConfigPaths: []string{"."},
