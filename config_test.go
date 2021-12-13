@@ -7,7 +7,7 @@ import (
 
 type TestConfig struct {
 	AlwaysInConfig string `sometag:"xd" boolTag:""`
-	TestField      string `name:"TestString" booltag:"" kek01:"pur"`
+	TestField      string `name:"SnakeName" booltag:"" kek01:"pur"`
 }
 
 func TestInitializeConfig(t *testing.T) {

@@ -6,9 +6,10 @@ import (
 	"strings"
 )
 
-type MapstructureRetagger struct{}
+// Here some description
+type mapstructureRetagger struct{}
 
-func (m MapstructureRetagger) MakeTag(structureType reflect.Type, fieldIndex int) reflect.StructTag {
+func (m mapstructureRetagger) MakeTag(structureType reflect.Type, fieldIndex int) reflect.StructTag {
 	field := structureType.Field(fieldIndex)
 	mapping := CamelCaseToUnderscoredLowered(field.Name)
 	newTag := strings.Join([]string{fmt.Sprintf("mapstructure:\"%s\"", mapping), string(field.Tag)}, " ")

@@ -12,7 +12,7 @@ type Tag struct {
 
 func GetTagsForField(field reflect.StructField) []Tag {
 	tag := field.Tag
-	tags := []Tag{}
+	var tags []Tag
 	for tag != "" {
 		// Skip leading space.
 		i := 0
