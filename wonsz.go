@@ -28,6 +28,11 @@ type ConfigOpts struct {
 	ConfigName string
 }
 
+// Get returns a config struct instance to which Wonsz binds configuration.
+func Get() interface{} {
+	return cfg
+}
+
 // TODO: Here some description
 func Wonsz(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
 	cfgOpts = &options
