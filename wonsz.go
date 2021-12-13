@@ -33,6 +33,16 @@ func Get() interface{} {
 	return cfg
 }
 
+// TODO: next version: make an option to get viper and set lib to use own viper, not global instance
+func GetViper() *viper.Viper {
+	return viper.GetViper()
+}
+
+// TODO: next version: make an option to get command that flags will be binded to and set lib to use command
+func GetCommand() *cobra.Command {
+	return &cobra.Command{}
+}
+
 // TODO: Here some description
 func Wonsz(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
 	cfgOpts = &options
