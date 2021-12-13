@@ -9,9 +9,9 @@
 **The best of Viper & Cobra combined.**  
 Ready to go solution for configurable CLI programs.
 
-## What is this?
+## What it does?
 
-You get configuration struct, that fields are automatically bound to:
+It creates configuration struct, that fields are automatically bound to:
 
 1. configuration file
 2. environment variables
