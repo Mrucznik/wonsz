@@ -2,15 +2,15 @@ package wonsz
 
 import "unicode"
 
-func CamelCaseToDashedLowered(text string) string {
-	return CamelCaseToSeparatorsLowered(text, '-')
+func camelCaseToDashedLowered(text string) string {
+	return camelCaseToSeparatorsLowered(text, '-')
 }
 
-func CamelCaseToUnderscoredLowered(text string) string {
-	return CamelCaseToSeparatorsLowered(text, '_')
+func camelCaseToUnderscoredLowered(text string) string {
+	return camelCaseToSeparatorsLowered(text, '_')
 }
 
-func CamelCaseToSeparatorsLowered(text string, separator rune) string {
+func camelCaseToSeparatorsLowered(text string, separator rune) string {
 	separators := getDesiredSeparatorPositions(text)
 
 	newLen := len(text) + len(separators)

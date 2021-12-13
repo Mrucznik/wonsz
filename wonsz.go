@@ -41,8 +41,8 @@ func Wonsz(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error
 		if field.Anonymous {
 			continue
 		}
-		dashedName := CamelCaseToDashedLowered(field.Name)
-		underscoredName := CamelCaseToUnderscoredLowered(field.Name)
+		dashedName := camelCaseToDashedLowered(field.Name)
+		underscoredName := camelCaseToUnderscoredLowered(field.Name)
 
 		flags := rootCmd.PersistentFlags()
 		usageHint := field.Tag.Get("usage")
