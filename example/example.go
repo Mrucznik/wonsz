@@ -56,14 +56,6 @@ func init() {
 		logrus.WithError(err).Fatal("cannot load config")
 		return
 	}
-	//
-	//// WTF IS THAT???
-	//rootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/.main.yaml)")
-	//
-	//// Cobra also supports local flags, which will only run
-	//// when this action is called directly.
-	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	//cobra.CheckErr(cobra.MarkFlagRequired(rootCmd.Flags(), "toggle"))
 }
 
 func main() {
@@ -73,3 +65,14 @@ func main() {
 		logrus.WithError(err).Fatal("application failed to execute")
 	}
 }
+
+// You can run your application and overwrite any config field by ENVIRONMENT_VARIABLE:
+// $ WONSZ_SNAKE_NAME="caution ramen" go run .
+// Or command line flag:
+// $ go run . --snake-name "danger noodle"
+// Or without any modifications (then we will get config values from example.json file):
+// $ go run .
+
+// You can also get some help about config variables available to override:
+// $ go run . --help
+// TODO: maybe add option to specify some help description here, by adding tag to a struct field
