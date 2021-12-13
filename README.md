@@ -2,7 +2,6 @@
 
 ---
 
-**W**rapper **O**f **N**aughty **S**nakes **Z**oo  
 **W**rapper **O**f **N**aughty **S**nake**Z**
 
 ---
@@ -10,33 +9,44 @@
 **The best of Viper & Cobra combined.**  
 Ready to go solution for configurable CLI programs.
 
-## What is this for?
+## What is this?
 
-Let's say you want to write configurable app.
-So, you use viper to load configuration from file.
-And you get your configuration by viper.Get.
-But it sucks to not have autocompletion.
-So you marshall your config to struct.
-But let's say, you dockerized your app, and when you run containers, you want to manage config by environment variables.
-So you use AutomaticEnv to get env variables.
-But it marshall to struct only when you bind env by name.
-So you do it, but then you have config struct field named like: ThisIsMyConfigField,
-so you must set THISISMYCONFIGFIELD env variable, which is not really readable.
-And you must place config field in two places (bind and struct).
-Let's say, you also want to run you app like an CLI app.
-So you use cobra. 
-But you want to pass some configuration by the CLI.
-So you use viper.BindPFlag to bind some flags to your config structs.
-But now you have different names in your code for the same config field and pretty complicated initialization logic.
-So you use this library, and then you just create 1 config struct without any tags, initialize it, and you have all 3 capabilities of configuring you app (by configuration file, by environment variables and by command flags) out of the box and one place to define your configuration fields!
-Awesome!
+You get configuration struct, that fields are automatically bound to:
+1. configuration file
+2. environment variables
+3. commandline flags
+
+## Why?
+
+- Let's say you want to write configurable app.  
+> So, you use viper to load configuration from file.
+You fetch your configuration fields by `viper.Get(key)`.  
+- But it sucks to not have autocompletion from IDE.  
+> So you marshall your config to struct.  
+- But let's say, you dockerized your app, and when you run containers, you want also to manage config by environment variables.  
+> So you use AutomaticEnv to get env variables. 
+- But it marshall to struct only when you bind specific environment variable by name.  
+> So you bind them. 
+- But you have config struct field named like: ThisIsMyConfigField, so you must set THISISMYCONFIGFIELD env variable, which is not really readable and nice.
+> You could write a wrapper.
+- And let's say, you also want to run you app like an CLI app.  
+> So you use cobra.   
+- But you want to overwrite some configuration fields by the command line flags.  
+> So you use viper.BindPFlag to bind some flags to your config structs.  
+- But now you have  in your code for the same config field and pretty complicated initialization logic.
+- And you end up with 3 different names of the same config field, and pretty complicated initialization logic. Also you must remember to add proper code when adding new field to configuration.
+
+> So you use this library, and then you just **create 1 config struct** without any tags, initialize it,
+> and you have **all 3 ways of configuring you app** (by configuration file, by environment variables and by command flags) out of the box and in one place.  
+> And you have all the above problems resolved.
+- Awesome!
 
 
 ## How to install?
 
 Import dependency into your project.
 ```shell
-go get -d github.com/Mrucznik/wonsz 
+go get -d github.com/Mrucznik/wonsz
 ```
 
 ## How to use?
