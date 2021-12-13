@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Mrucznik/wonsz"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	config = &Config{}
-	err := Wonsz(config, rootCmd, ConfigOpts{
+	err := wonsz.Wonsz(config, rootCmd, wonsz.ConfigOpts{
 		Prefix:      "WONSZ",
 		ConfigPaths: []string{"."},
 		ConfigType:  "toml",

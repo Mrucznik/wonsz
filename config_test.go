@@ -1,4 +1,4 @@
-package main
+package wonsz
 
 import (
 	"github.com/spf13/cobra"
@@ -11,5 +11,8 @@ type TestConfig struct {
 }
 
 func TestInitializeConfig(t *testing.T) {
-	Wonsz(TestConfig{}, &cobra.Command{}, ConfigOpts{})
+	err := Wonsz(TestConfig{}, &cobra.Command{}, ConfigOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
 }
