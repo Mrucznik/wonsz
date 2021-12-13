@@ -6,9 +6,10 @@ import (
 	"strings"
 )
 
-// Here some description
+// TODO: Here some description
 type mapstructureRetagger struct{}
 
+// TODO: Here some description
 func (m mapstructureRetagger) MakeTag(structureType reflect.Type, fieldIndex int) reflect.StructTag {
 	field := structureType.Field(fieldIndex)
 	mapping := camelCaseToUnderscoredLowered(field.Name)

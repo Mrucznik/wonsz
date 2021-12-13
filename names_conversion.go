@@ -2,14 +2,17 @@ package wonsz
 
 import "unicode"
 
+// TODO: Here some description
 func camelCaseToDashedLowered(text string) string {
 	return camelCaseToSeparatorsLowered(text, '-')
 }
 
+// TODO: Here some description
 func camelCaseToUnderscoredLowered(text string) string {
 	return camelCaseToSeparatorsLowered(text, '_')
 }
 
+// TODO: Here some description
 func camelCaseToSeparatorsLowered(text string, separator rune) string {
 	separators := getDesiredSeparatorPositions(text)
 
