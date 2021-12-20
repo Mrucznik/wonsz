@@ -99,9 +99,7 @@ func execute(_ *cobra.Command, _ []string) {
 
 This is the simplest example, more detailed [you will find here](example/example.go).
 
-### Integrate with existing application:
-
-This is my proposal, how to integrate that library with an existing go project.
+### Integrate with existing application
 
 1. Create file config/config.go
     ```go
@@ -114,7 +112,7 @@ This is my proposal, how to integrate that library with an existing go project.
 3. ???
 4. profit
 
-### Configure and run your application with:
+### Configure and run your application with
 
 - **default struct values**
   ```cgo
