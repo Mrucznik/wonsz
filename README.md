@@ -1,4 +1,4 @@
-![img](wonsz.svg)
+![img](wonsz.png)
 
 ---
 
