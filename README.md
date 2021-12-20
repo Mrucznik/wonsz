@@ -120,7 +120,7 @@ This is the simplest example, more detailed [you will find here](example/example
       SnakeName: "nope-rope",
   }
   ```
-- **configuration files**
+- **configuration files** e.g.
     - *config.json*
       ```json
       {
