@@ -1,86 +1,105 @@
 package wonsz
 
 import (
-	"reflect"
+	"fmt"
 	"testing"
 )
 
+func Example_getDesiredSeparatorPositions() {
+	separatorPos := getDesiredSeparatorPositions("userIDText")
+	fmt.Println(separatorPos)
+
+	// Output: map[4:{} 6:{}]
+}
+
 func Test_camelCaseToDashedLowered(t *testing.T) {
-	type args struct {
-		text string
-	}
 	tests := []struct {
-		name string
-		args args
-		want string
+		name          string
+		textToConvert string
+		want          string
 	}{
-		// TODO: Add test cases.
+		{
+			name:          "simpleTestingName",
+			textToConvert: "simpleTestingName",
+			want:          "simple-testing-name",
+		},
+		{
+			name:          "longCAPITALWord",
+			textToConvert: "longCAPITALWord",
+			want:          "long-capital-word",
+		},
+		{
+			name:          "non letters symbols",
+			textToConvert: "Non-ConventionalStringMyID",
+			want:          "non-conventional-string-my-id",
+		},
+		{
+			name:          "VeIrDTeXt",
+			textToConvert: "VeIrDTeXt",
+			want:          "ve-ir-d-te-xt",
+		},
+		{
+			name:          "empty",
+			textToConvert: "",
+			want:          "",
+		},
+		{
+			name:          "numbers in name",
+			textToConvert: "userWith5BANSButNoMoreTHAN100Ok1200ok",
+			want:          "user-with-5-bans-but-no-more-than-100-ok-1200-ok",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := camelCaseToDashedLowered(tt.args.text); got != tt.want {
+			if got := camelCaseToDashedLowered(tt.textToConvert); got != tt.want {
 				t.Errorf("camelCaseToDashedLowered() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_camelCaseToSeparatorsLowered(t *testing.T) {
-	type args struct {
-		text      string
-		separator rune
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := camelCaseToSeparatorsLowered(tt.args.text, tt.args.separator); got != tt.want {
-				t.Errorf("camelCaseToSeparatorsLowered() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_camelCaseToUnderscoredLowered(t *testing.T) {
-	type args struct {
-		text string
-	}
 	tests := []struct {
-		name string
-		args args
-		want string
+		name          string
+		textToConvert string
+		want          string
 	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := camelCaseToUnderscoredLowered(tt.args.text); got != tt.want {
-				t.Errorf("camelCaseToUnderscoredLowered() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
-func Test_getDesiredSeparatorPositions(t *testing.T) {
-	type args struct {
-		text string
-	}
-	tests := []struct {
-		name string
-		args args
-		want map[int]struct{}
-	}{
-		// TODO: Add test cases.
+		{
+			name:          "simpleTestingName",
+			textToConvert: "simpleTestingName",
+			want:          "simple_testing_name",
+		},
+		{
+			name:          "longCAPITALWord",
+			textToConvert: "longCAPITALWord",
+			want:          "long_capital_word",
+		},
+		{
+			name:          "non letters symbols",
+			textToConvert: "Non-ConventionalStringMyID",
+			want:          "non-conventional_string_my_id",
+		},
+		{
+			name:          "VeIrDTeXt",
+			textToConvert: "VeIrDTeXt",
+			want:          "ve_ir_d_te_xt",
+		},
+		{
+			name:          "empty",
+			textToConvert: "",
+			want:          "",
+		},
+		{
+			name:          "numbers in name",
+			textToConvert: "userWith5BANSButNoMoreTHAN100Ok1200ok",
+			want:          "user_with_5_bans_but_no_more_than_100_ok_1200_ok",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getDesiredSeparatorPositions(tt.args.text); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getDesiredSeparatorPositions() = %v, want %v", got, tt.want)
+			if got := camelCaseToUnderscoredLowered(tt.textToConvert); got != tt.want {
+				t.Errorf("camelCaseToUnderscoredLowered() = %v, want %v", got, tt.want)
 			}
 		})
 	}
