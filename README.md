@@ -1,4 +1,4 @@
-# Wonsz
+![img](wonsz.svg)
 
 ---
 
