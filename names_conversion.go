@@ -2,17 +2,23 @@ package wonsz
 
 import "unicode"
 
-// TODO: Here some description
+// camelCaseToDashedLowered converts text from
+// camelCase naming convention (begin new words with capital letter except first word)
+// to kebab-case naming convention (separate words with dashes).
 func camelCaseToDashedLowered(text string) string {
 	return camelCaseToSeparatorsLowered(text, '-')
 }
 
-// TODO: Here some description
+// camelCaseToUnderscoredLowered converts text from
+// camelCase naming convention (begin new words with capital letter except first word)
+// to snake_case naming convention (separate words with underscores).
 func camelCaseToUnderscoredLowered(text string) string {
 	return camelCaseToSeparatorsLowered(text, '_')
 }
 
-// TODO: Here some description
+// camelCaseToSeparatorsLowered converts text from
+// camelCase naming convention (begin new words with capital letter except first word)
+// to lowercase text with words separated by specified separator.
 func camelCaseToSeparatorsLowered(text string, separator rune) string {
 	separators := getDesiredSeparatorPositions(text)
 
@@ -32,23 +38,42 @@ func camelCaseToSeparatorsLowered(text string, separator rune) string {
 	return string(converted)
 }
 
+// getDesiredSeparatorPositions takes as a parameter text in
+// camelCase naming convention (begin new words with capital letter except first word)
+// and returns a places where two words should be separated (as map keys).
+// If word contains a several capital letters in a row, separation will occur before last capital letter.
+// Numbers will also be separated.
+// We skip runes other than letters & numbers.
 func getDesiredSeparatorPositions(text string) map[int]struct{} {
 	separators := map[int]struct{}{}
-	longUpper := false
+	upperSequence := false
+	numberSequence := false
 	for i, j := 0, 1; j < len(text); i, j = i+1, j+1 {
 		letter := rune(text[i])
 		nextLetter := rune(text[j])
 
-		if unicode.IsUpper(letter) && unicode.IsUpper(nextLetter) {
-			longUpper = true
+		if !unicode.IsLetter(letter) && !unicode.IsNumber(letter) {
 			continue
 		}
 
-		if unicode.IsUpper(nextLetter) {
+		if unicode.IsUpper(letter) && unicode.IsUpper(nextLetter) {
+			upperSequence = true
+			continue
+		}
+
+		if unicode.IsNumber(letter) && unicode.IsNumber(nextLetter) {
+			numberSequence = true
+			continue
+		}
+
+		if unicode.IsUpper(nextLetter) || unicode.IsNumber(nextLetter) {
 			separators[j] = struct{}{}
-		} else if longUpper {
+		} else if upperSequence {
 			separators[i] = struct{}{}
-			longUpper = false
+			upperSequence = false
+		} else if numberSequence {
+			separators[j] = struct{}{}
+			numberSequence = false
 		}
 	}
 	return separators
