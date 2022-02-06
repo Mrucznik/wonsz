@@ -5,13 +5,12 @@ import (
 	"strconv"
 )
 
-// TODO: Here some description
 type Tag struct {
 	name  string
 	value string
 }
 
-// TODO: Here some description
+// GetTagsForField extracts field tag names and values from specified structure.
 func GetTagsForField(field reflect.StructField) []Tag {
 	tag := field.Tag
 	var tags []Tag
