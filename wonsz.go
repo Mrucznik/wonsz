@@ -5,6 +5,7 @@ import (
 	"github.com/sevlyar/retag"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"reflect"
 )
@@ -52,89 +53,129 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 		return fmt.Errorf("config parameter is not a pointer to a structure. Maybe you should use & operator")
 	}
 
+	// prepare for processing
 	cfgOpts = &options
 	cfg = retag.Convert(config, mapstructureRetagger{})
 
-	//TODO: maybe split this to smaller functions
-	if rootCmd == nil {
+	if rootCmd == nil { // only viper
 		initializeViper()
-	} else {
-		cobra.OnInitialize(initializeViper)
+		return nil
+	}
+	cobra.OnInitialize(initializeViper)
 
-		confType := reflect.TypeOf(cfg).Elem()
-		for i := 0; i < confType.NumField(); i++ {
-			field := confType.Field(i)
-			if field.Anonymous {
-				continue
-			}
-			dashedName := camelCaseToDashedLowered(field.Name)
-			underscoredName := camelCaseToUnderscoredLowered(field.Name)
+	confType := reflect.TypeOf(cfg).Elem()
+	for i := 0; i < confType.NumField(); i++ {
+		field := confType.Field(i)
+		if field.Anonymous {
+			continue
+		}
+		dashedName := camelCaseToDashedLowered(field.Name)
+		underscoredName := camelCaseToUnderscoredLowered(field.Name)
 
-			flags := rootCmd.PersistentFlags()
-			usageHint := field.Tag.Get("usage")
-			if shortcut, ok := field.Tag.Lookup("shortcut"); ok {
-				switch field.Type.Kind() {
-				case reflect.String:
-					flags.StringP(dashedName, shortcut, "", usageHint)
-				case reflect.Int64:
-					flags.Int64P(dashedName, shortcut, 0, usageHint)
-				case reflect.Int32:
-					flags.Int32P(dashedName, shortcut, 0, usageHint)
-				case reflect.Int16:
-					flags.Int16P(dashedName, shortcut, 0, usageHint)
-				case reflect.Int8:
-					flags.Int8P(dashedName, shortcut, 0, usageHint)
-				case reflect.Int:
-					flags.IntP(dashedName, shortcut, 0, usageHint)
-				case reflect.Float64:
-					flags.Float64P(dashedName, shortcut, 0, usageHint)
-				case reflect.Float32:
-					flags.Float32P(dashedName, shortcut, 0, usageHint)
-				case reflect.Bool:
-					flags.BoolP(dashedName, shortcut, false, usageHint)
-				case reflect.Array, reflect.Slice, reflect.Map:
-					//TODO: arrays
-					return fmt.Errorf("arrays not supported yet")
-				default:
-					continue
-				}
-			} else {
-				switch field.Type.Kind() {
-				case reflect.String:
-					flags.String(dashedName, "", usageHint)
-				case reflect.Int64:
-					flags.Int64(dashedName, 0, usageHint)
-				case reflect.Int32:
-					flags.Int32(dashedName, 0, usageHint)
-				case reflect.Int16:
-					flags.Int16(dashedName, 0, usageHint)
-				case reflect.Int8:
-					flags.Int8(dashedName, 0, usageHint)
-				case reflect.Int:
-					flags.Int(dashedName, 0, usageHint)
-				case reflect.Float64:
-					flags.Float64(dashedName, 0, usageHint)
-				case reflect.Float32:
-					flags.Float32(dashedName, 0, usageHint)
-				case reflect.Bool:
-					flags.Bool(dashedName, false, usageHint)
-				case reflect.Array, reflect.Slice, reflect.Map:
-					//TODO: arrays
-					return fmt.Errorf("arrays not supported yet")
-				default:
-					continue
-				}
-			}
+		var err error
+		flags := rootCmd.PersistentFlags()
+		usageHint := field.Tag.Get("usage")
+		if shortcut, ok := field.Tag.Lookup("shortcut"); ok {
+			err = bindPFlag(flags, field, dashedName, shortcut, usageHint)
+		} else {
+			err = bindFlag(flags, field, dashedName, usageHint)
+		}
+		if err != nil {
+			return err
+		}
 
-			targetFlag := flags.Lookup(dashedName)
-			if targetFlag == nil {
-				// TOSDO: better errors
-				return fmt.Errorf("nie ma flag")
-			}
-			err := viper.BindPFlag(underscoredName, targetFlag)
-			if err != nil {
-				return err
-			}
+		targetFlag := flags.Lookup(dashedName)
+		if targetFlag == nil {
+			// TODO: better errors
+			return fmt.Errorf("nie ma flag")
+		}
+		err = viper.BindPFlag(underscoredName, targetFlag)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func bindPFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, shortcut, usageHint string) error {
+	switch field.Type.Kind() {
+	case reflect.String:
+		flags.StringP(dashedName, shortcut, "", usageHint)
+	case reflect.Int64:
+		flags.Int64P(dashedName, shortcut, 0, usageHint)
+	case reflect.Int32:
+		flags.Int32P(dashedName, shortcut, 0, usageHint)
+	case reflect.Int16:
+		flags.Int16P(dashedName, shortcut, 0, usageHint)
+	case reflect.Int8:
+		flags.Int8P(dashedName, shortcut, 0, usageHint)
+	case reflect.Int:
+		flags.IntP(dashedName, shortcut, 0, usageHint)
+	case reflect.Float64:
+		flags.Float64P(dashedName, shortcut, 0, usageHint)
+	case reflect.Float32:
+		flags.Float32P(dashedName, shortcut, 0, usageHint)
+	case reflect.Bool:
+		flags.BoolP(dashedName, shortcut, false, usageHint)
+	case reflect.Map:
+		if field.Type.Elem().Kind() == reflect.String {
+			flags.StringToStringP(dashedName, shortcut, map[string]string{}, usageHint)
+		} else {
+			return fmt.Errorf("unsupported flag %s type: %s. only map[string]string maps are supported", dashedName, field.Type.String())
+		}
+	case reflect.Slice:
+		if field.Type.Elem().Kind() == reflect.String {
+			flags.StringSliceP(dashedName, shortcut, []string{}, usageHint)
+		} else {
+			return fmt.Errorf("unsupported flag %s type: %s. only string slices are supported", dashedName, field.Type.String())
+		}
+	case reflect.Array:
+		if field.Type.Elem().Kind() == reflect.String {
+			flags.StringArrayP(dashedName, shortcut, []string{}, usageHint)
+		} else {
+			return fmt.Errorf("unsupported flag %s type: %s. only string arrays are supported", dashedName, field.Type.String())
+		}
+	}
+	return nil
+}
+
+func bindFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, usageHint string) error {
+	switch field.Type.Kind() {
+	case reflect.String:
+		flags.String(dashedName, "", usageHint)
+	case reflect.Int64:
+		flags.Int64(dashedName, 0, usageHint)
+	case reflect.Int32:
+		flags.Int32(dashedName, 0, usageHint)
+	case reflect.Int16:
+		flags.Int16(dashedName, 0, usageHint)
+	case reflect.Int8:
+		flags.Int8(dashedName, 0, usageHint)
+	case reflect.Int:
+		flags.Int(dashedName, 0, usageHint)
+	case reflect.Float64:
+		flags.Float64(dashedName, 0, usageHint)
+	case reflect.Float32:
+		flags.Float32(dashedName, 0, usageHint)
+	case reflect.Bool:
+		flags.Bool(dashedName, false, usageHint)
+	case reflect.Array:
+		if field.Type.Elem().Kind() == reflect.String {
+			flags.StringArray(dashedName, []string{}, usageHint)
+		} else {
+			return fmt.Errorf("unsupported flag %s type: %s. only string arrays are supported", dashedName, field.Type.String())
+		}
+	case reflect.Slice:
+		if field.Type.Elem().Kind() == reflect.String {
+			flags.StringSlice(dashedName, []string{}, usageHint)
+		} else {
+			return fmt.Errorf("unsupported flag %s type: %s. only string slices are supported", dashedName, field.Type.String())
+		}
+	case reflect.Map:
+		if field.Type.Elem().Kind() == reflect.String {
+			flags.StringToString(dashedName, map[string]string{}, usageHint)
+		} else {
+			return fmt.Errorf("unsupported flag %s type: %s. only map[string]string maps are supported", dashedName, field.Type.String())
 		}
 	}
 	return nil
