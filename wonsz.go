@@ -99,6 +99,49 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 	return nil
 }
 
+func initializeViper() {
+	viper.SetEnvPrefix(cfgOpts.EnvPrefix)
+
+	for _, path := range cfgOpts.ConfigPaths {
+		viper.AddConfigPath(path)
+	}
+	viper.SetConfigType(cfgOpts.ConfigType)
+	viper.SetConfigName(cfgOpts.ConfigName)
+
+	bindEnvsAndSetDefaults()
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		logrus.Infof("Config file not found.")
+	} else {
+		logrus.Infof("Using config file: %v.", viper.ConfigFileUsed())
+	}
+
+	if err := viper.Unmarshal(&cfg); err != nil {
+		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
+	}
+
+	cfgOpts = nil
+}
+
+func bindEnvsAndSetDefaults() {
+	el := reflect.TypeOf(cfg).Elem()
+	for i := 0; i < el.NumField(); i++ {
+		field := el.Field(i)
+		defaultVal := field.Tag.Get("default")
+		mapping := field.Tag.Get("mapstructure")
+
+		if defaultVal != "" {
+			viper.SetDefault(mapping, defaultVal)
+		} else {
+			err := viper.BindEnv(mapping)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		}
+	}
+}
+
 func bindPFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, shortcut, usageHint string) error {
 	switch field.Type.Kind() {
 	case reflect.String:
@@ -181,47 +224,4 @@ func bindFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, usage
 		}
 	}
 	return nil
-}
-
-func initializeViper() {
-	viper.SetEnvPrefix(cfgOpts.EnvPrefix)
-
-	for _, path := range cfgOpts.ConfigPaths {
-		viper.AddConfigPath(path)
-	}
-	viper.SetConfigType(cfgOpts.ConfigType)
-	viper.SetConfigName(cfgOpts.ConfigName)
-
-	bindEnvsAndSetDefaults()
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		logrus.Infof("Config file not found.")
-	} else {
-		logrus.Infof("Using config file: %v.", viper.ConfigFileUsed())
-	}
-
-	if err := viper.Unmarshal(&cfg); err != nil {
-		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
-	}
-
-	cfgOpts = nil
-}
-
-func bindEnvsAndSetDefaults() {
-	el := reflect.TypeOf(cfg).Elem()
-	for i := 0; i < el.NumField(); i++ {
-		field := el.Field(i)
-		defaultVal := field.Tag.Get("default")
-		mapping := field.Tag.Get("mapstructure")
-
-		if defaultVal != "" {
-			viper.SetDefault(mapping, defaultVal)
-		} else {
-			err := viper.BindEnv(mapping)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-		}
-	}
 }
