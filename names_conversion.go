@@ -42,8 +42,7 @@ func camelCaseToSeparatorsLowered(text string, separator rune) string {
 // camelCase naming convention (begin new words with capital letter except first word)
 // and returns a places where two words should be separated (as map keys).
 // If word contains a several capital letters in a row, separation will occur before last capital letter.
-// Numbers will also be separated.
-// We skip runes other than letters & numbers.
+// Numbers will also be separated. It skips runes other than letters & numbers.
 func getDesiredSeparatorPositions(text string) map[int]struct{} {
 	separators := map[int]struct{}{}
 	upperSequence := false
