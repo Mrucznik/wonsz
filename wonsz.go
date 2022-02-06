@@ -89,8 +89,7 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 
 		targetFlag := flags.Lookup(dashedName)
 		if targetFlag == nil {
-			// TODO: better errors
-			return fmt.Errorf("nie ma flag")
+			return fmt.Errorf("flag %s not found, despite successful binding", dashedName)
 		}
 		err = viper.BindPFlag(underscoredName, targetFlag)
 		if err != nil {
