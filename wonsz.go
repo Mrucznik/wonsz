@@ -49,8 +49,7 @@ func GetCommand() *cobra.Command {
 // You can pass nil to rootCmd, if you don't want to bind cobra command flags with config.
 func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
 	if !(reflect.TypeOf(config).Kind() == reflect.Ptr && reflect.TypeOf(config).Elem().Kind() == reflect.Struct) {
-		// TODO: Better error handling
-		return fmt.Errorf("config parameter is not a pointer to a structure")
+		return fmt.Errorf("config parameter is not a pointer to a structure. Maybe you should use & operator")
 	}
 
 	cfgOpts = &options
@@ -141,7 +140,6 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 	return nil
 }
 
-// TODO: here some description
 func initializeViper() {
 	viper.SetEnvPrefix(cfgOpts.EnvPrefix)
 
@@ -168,7 +166,6 @@ func initializeViper() {
 	cfgOpts = nil
 }
 
-// TODO: here some description
 func bindEnvsAndSetDefaults() {
 	el := reflect.TypeOf(cfg).Elem()
 	for i := 0; i < el.NumField(); i++ {
