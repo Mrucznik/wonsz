@@ -6,10 +6,10 @@ import (
 	"strings"
 )
 
-// TODO: Here some description
+// Structure for being used by retag.Convert to create desired mapstructure tags for config structure.
 type mapstructureRetagger struct{}
 
-// TODO: Here some description
+// Add a mapstructure tag to structure field.
 func (m mapstructureRetagger) MakeTag(structureType reflect.Type, fieldIndex int) reflect.StructTag {
 	field := structureType.Field(fieldIndex)
 	mapping := camelCaseToUnderscoredLowered(field.Name)
