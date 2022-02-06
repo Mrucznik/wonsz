@@ -75,4 +75,3 @@ func main() {
 
 // You can also get some help about config variables available to override:
 // $ go run . --help
-// TODO: maybe add option to specify some help description here, by adding tag to a struct field

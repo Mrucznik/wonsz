@@ -205,7 +205,6 @@ func initializeViper() {
 		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
 	}
 
-	// TODO: do we relly don't want to store this configuration globally and want to garbage collector to remove it?
 	cfgOpts = nil
 }
 
