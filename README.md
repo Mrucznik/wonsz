@@ -9,30 +9,30 @@
 **The best of Viper & Cobra combined.**  
 Ready to go solution for configurable CLI programs.
 
-## What it does?
+## What does it do?
 
-It creates configuration struct, that fields are automatically bound to:
+It creates a configuration struct, that fields are automatically bound to:
 
 1. configuration file
 2. environment variables
-3. commandline flags
+3. command line flags
 
 ## Why?
 
-- Let's say you want to write configurable app.
+- Let's say you want to write a configurable app.
 
 > So, I use viper to load configuration from file. I fetch configuration fields by `viper.Get(key)`.
 
 - But it sucks to not have autocompletion from IDE.
 
-> So, I marshall your config to struct.
+> So, I marshall your config to a struct.
 
 - But let's say, you dockerized your app and when you run containers, you want also to manage config by environment
   variables.
 
 > So, I use AutomaticEnv to get env variables.
 
-- But it marshall to struct only when you bind specific environment variable by name.
+- But it marshalls to struct only when you bind specific environment variables by name.
 
 > I would bind them by viper.BindEnv().
 
@@ -41,11 +41,11 @@ It creates configuration struct, that fields are automatically bound to:
 
 > :/
 
-- And let's say, you also want to run you app like an CLI app.
+- And let's say, you also want to run your app like a CLI app.
 
 > I would use cobra.
 
-- But you also want to overwrite some configuration fields by the command line flags.
+- But you may also want configuration fields to be overwritten with values from the command line flags.
 
 > So, I use viper.BindPFlag to bind some flags to your config structs.
 
@@ -53,7 +53,7 @@ It creates configuration struct, that fields are automatically bound to:
   must remember to add proper code when adding a new field to the configuration, so every way of loading the config field is properly handled.
 
 > So I use this library, and then you just **create 1 config struct** without any tags, initialize it,
-> and you have **all 3 ways of configuring you app** (by configuration file, by environment variables and by command flags) out of the box and in one place.  
+> and you have **all 3 ways of configuring your app** (by the configuration file, by environment variables, and by command flags) out of the box and in one place.  
 > And I have all the above problems resolved!
 
 - Awessssome!
@@ -98,7 +98,7 @@ func execute(_ *cobra.Command, _ []string) {
 
 This is the simplest example, more detailed [you will find here](example/example.go).
 
-### Integrate with existing application
+### Integrate with an existing application
 
 1. Create file config/config.go
     ```go
