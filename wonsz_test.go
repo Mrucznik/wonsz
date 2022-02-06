@@ -10,8 +10,10 @@ type TestConfig struct {
 	TestField      string `name:"SnakeName" booltag:"" kek01:"pur"`
 }
 
+var testConfig TestConfig
+
 func TestInitializeConfig(t *testing.T) {
-	err := BindConfig(TestConfig{}, &cobra.Command{}, ConfigOpts{})
+	err := BindConfig(&testConfig, &cobra.Command{}, ConfigOpts{})
 	if err != nil {
 		t.Fatal(err)
 	}
