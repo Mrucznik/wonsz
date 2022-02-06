@@ -6,13 +6,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	globalViper "github.com/spf13/viper"
 	"reflect"
 )
 
-// TODO: maybe ConfigOpts as variadic parameters?
 var cfgOpts *ConfigOpts
 var cfg interface{}
+var viper *globalViper.Viper
 
 // ConfigOpts provide additional options to configure Wonsz.
 type ConfigOpts struct {
@@ -28,6 +28,9 @@ type ConfigOpts struct {
 
 	// Name for the config file. Does not include extension.
 	ConfigName string
+
+	// Pass own viper instance. Default is global viper instance.
+	Viper *globalViper.Viper
 }
 
 // Get returns a config struct instance to which Wonsz binds configuration.
@@ -35,14 +38,9 @@ func Get() interface{} {
 	return cfg
 }
 
-// TODO: next version: make an option to get viper and set lib to use own viper, not global instance
-func GetViper() *viper.Viper {
-	return viper.GetViper()
-}
-
-// TODO: next version: make an option to get command that flags will be binded to and set lib to use command
-func GetCommand() *cobra.Command {
-	return &cobra.Command{}
+// GetViper returns a viper instance used by Wonsz.
+func GetViper() *globalViper.Viper {
+	return viper
 }
 
 // BindConfig binds configuration structure to config file, environment variables and cobra command flags.
@@ -55,6 +53,11 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 
 	// prepare for processing
 	cfgOpts = &options
+	if cfgOpts != nil && cfgOpts.Viper != nil {
+		viper = cfgOpts.Viper
+	} else {
+		viper = globalViper.GetViper()
+	}
 	cfg = retag.Convert(config, mapstructureRetagger{})
 
 	if rootCmd == nil { // only viper
