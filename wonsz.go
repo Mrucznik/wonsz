@@ -24,6 +24,8 @@ type ConfigOpts struct {
 	ConfigPaths []string
 
 	// Type of the configuration file, e.g. "json".
+	// Wonsz use Viper for loading the configuration file,
+	// so you can use any type of configuration file that Viper supports.
 	ConfigType string
 
 	// Name for the config file. Does not include extension.
