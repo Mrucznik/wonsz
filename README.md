@@ -9,6 +9,10 @@
 **The best of Viper & Cobra combined.**  
 Ready to go solution for configurable CLI programs.
 
+![example workflow](https://github.com/Mrucznik/wonsz/actions/workflows/go.yml/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Mrucznik/wonsz)](https://goreportcard.com/report/github.com/Mrucznik/wonsz)
+[![PkgGoDev](https://pkg.go.dev/badge/mod/github.com/Mrucznik/wonsz)](https://pkg.go.dev/mod/github.com/Mrucznik/wonsz)
+
 ## What does it do?
 
 It creates a configuration struct, that fields are automatically bound to:
