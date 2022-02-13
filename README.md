@@ -175,8 +175,14 @@ func init() {
   ```
 - **command-line flags**
   ```shell
-  go run main.go --snake_name="danger noodle"
+  go run main.go --snake-name="danger noodle"
   ``` 
+
+## Key concepts
+
+- names in configurations files should be in snake_case
+- environment variables are in SCREAMING_SNAKE_CASE
+- command-line flags names should be dash separated
 
 ## Detailed configuration options
 
