@@ -80,15 +80,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var config *Configuration
+var config Configuration
 
 type Configuration struct {
 	// Here we declare configuration fields. No need to add any tags.
 	SnakeName string
 }
 
+var rootCmd = &cobra.Command{Run: execute}
+
 func main() {
-	wonsz.Wonsz(config, &cobra.Command{Run: execute}, wonsz.ConfigOpts{})
+	wonsz.BindConfig(&config, // pointer to the configuration struct
+		rootCmd,            // root cobra command
+		wonsz.ConfigOpts{}) // Wonsz configuration options
+
+	rootCmd.Execute()
 }
 
 func execute(_ *cobra.Command, _ []string) {
@@ -105,11 +111,36 @@ This is the simplest example, more detailed [you will find here](example/example
     // config.go file
     package config
    
-   // TODO: more code
+    var Config Configuration
+
+    type Configuration struct {
+    // Here we declare configuration fields. No need to add any tags.
+        SnakeName string
+    }
     ```
-2. xd
-3. ???
-4. profit
+2. Bind created config structure to cobra & viper using wonsz.BindConfig()
+```go
+// cmd/root.go
+package cmd
+
+import (
+    "github.com/Mrucznik/wonsz"
+	"github.com/You/your-project/config"
+    "github.com/spf13/cobra"
+)
+
+var rootCmd = &cobra.Command{
+	// your root cobra command
+}
+
+func init() {
+	wonsz.BindConfig(&config.Config, rootCmd, wonsz.ConfigOpts{})
+	
+	// other code
+}
+
+```
+3. Done!
 
 ### Configure and run your application with
 
