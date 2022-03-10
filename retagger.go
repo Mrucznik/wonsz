@@ -14,6 +14,13 @@ func (m mapstructureRetagger) MakeTag(structureType reflect.Type, fieldIndex int
 	field := structureType.Field(fieldIndex)
 	mapping := camelCaseToUnderscoredLowered(field.Name)
 
+	tags := GetTagsForField(field)
+	for i := range tags {
+		if tags[i].name == "mapstructure" {
+			return field.Tag
+		}
+	}
+
 	var newTag string
 	if field.Tag != "" {
 		newTag = fmt.Sprintf("mapstructure:\"%s\" %s", mapping, field.Tag)

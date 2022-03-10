@@ -9,7 +9,7 @@ func Test_mapstructureRetagger_MakeTag(t *testing.T) {
 	type testStruct struct {
 		testField               string
 		alreadyTaggedField      string `someTag:"testTagValue"`
-		mapstructureTaggedField string `mapstructure:"this_value_should_be_overwrite"`
+		mapstructureTaggedField string `mapstructure:"this_value_should_persist"`
 	}
 
 	type args struct {
@@ -43,7 +43,7 @@ func Test_mapstructureRetagger_MakeTag(t *testing.T) {
 				structureType: reflect.TypeOf(testStruct{}),
 				fieldIndex:    2,
 			},
-			want: "mapstructure:\"mapstructure_tagged_field\"",
+			want: "mapstructure:\"this_value_should_persist\"",
 		},
 	}
 	for _, tt := range tests {
