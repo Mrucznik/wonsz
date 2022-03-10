@@ -14,6 +14,9 @@ type Tag struct {
 func GetTagsForField(field reflect.StructField) []Tag {
 	tag := field.Tag
 	var tags []Tag
+
+	// this block of code is modification of https://github.com/golang/go/blob/master/src/reflect/type.go#L1191-L1238
+	// Copyright (c) 2009 The Go Authors. https://github.com/golang/go/blob/master/LICENSE
 	for tag != "" {
 		// Skip leading space.
 		i := 0
