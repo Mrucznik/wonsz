@@ -5,6 +5,7 @@ import (
 	"strconv"
 )
 
+// Tag contains the name and value of a structure field tag.
 type Tag struct {
 	name  string
 	value string
