@@ -1,16 +1,8 @@
 package wonsz
 
 import (
-	"fmt"
 	"testing"
 )
-
-func Example_getDesiredSeparatorPositions() {
-	separatorPos := getDesiredSeparatorPositions("userIDText")
-	fmt.Println(separatorPos)
-
-	// Output: map[4:{} 6:{}]
-}
 
 func Test_camelCaseToDashedLowered(t *testing.T) {
 	tests := []struct {
