@@ -7,7 +7,9 @@ import (
 
 func Test_mapstructureRetagger_MakeTag(t *testing.T) {
 	type testStruct struct {
-		testField string
+		testField               string
+		alreadyTaggedField      string `someTag:"testTagValue"`
+		mapstructureTaggedField string `mapstructure:"this_value_should_be_overwrite"`
 	}
 
 	type args struct {
@@ -26,6 +28,22 @@ func Test_mapstructureRetagger_MakeTag(t *testing.T) {
 				fieldIndex:    0,
 			},
 			want: "mapstructure:\"test_field\"",
+		},
+		{
+			name: "field with tag already set",
+			args: args{
+				structureType: reflect.TypeOf(testStruct{}),
+				fieldIndex:    1,
+			},
+			want: "mapstructure:\"already_tagged_field\" someTag:\"testTagValue\"",
+		},
+		{
+			name: "field with tag already set",
+			args: args{
+				structureType: reflect.TypeOf(testStruct{}),
+				fieldIndex:    2,
+			},
+			want: "mapstructure:\"mapstructure_tagged_field\"",
 		},
 	}
 	for _, tt := range tests {
