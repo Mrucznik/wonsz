@@ -164,11 +164,11 @@ func bindPFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, shor
 		flags.Float32P(dashedName, shortcut, 0, usageHint)
 	case reflect.Bool:
 		flags.BoolP(dashedName, shortcut, false, usageHint)
-	case reflect.Map:
+	case reflect.Array:
 		if field.Type.Elem().Kind() == reflect.String {
-			flags.StringToStringP(dashedName, shortcut, map[string]string{}, usageHint)
+			flags.StringArrayP(dashedName, shortcut, []string{}, usageHint)
 		} else {
-			return fmt.Errorf("unsupported flag %s type: %s. only map[string]string maps are supported", dashedName, field.Type.String())
+			return fmt.Errorf("unsupported flag %s type: %s. only string arrays are supported", dashedName, field.Type.String())
 		}
 	case reflect.Slice:
 		if field.Type.Elem().Kind() == reflect.String {
@@ -176,11 +176,11 @@ func bindPFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, shor
 		} else {
 			return fmt.Errorf("unsupported flag %s type: %s. only string slices are supported", dashedName, field.Type.String())
 		}
-	case reflect.Array:
+	case reflect.Map:
 		if field.Type.Elem().Kind() == reflect.String {
-			flags.StringArrayP(dashedName, shortcut, []string{}, usageHint)
+			flags.StringToStringP(dashedName, shortcut, map[string]string{}, usageHint)
 		} else {
-			return fmt.Errorf("unsupported flag %s type: %s. only string arrays are supported", dashedName, field.Type.String())
+			return fmt.Errorf("unsupported flag %s type: %s. only map[string]string maps are supported", dashedName, field.Type.String())
 		}
 	}
 	return nil
