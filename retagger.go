@@ -7,6 +7,7 @@ import (
 )
 
 // Structure for being used by retag.Convert to create desired mapstructure tags for config structure.
+// It's needed by viper to be able to map environment variables.
 type mapstructureRetagger struct{}
 
 // Add a mapstructure tag to structure field.
