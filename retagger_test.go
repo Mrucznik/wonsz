@@ -6,6 +6,10 @@ import (
 )
 
 func Test_mapstructureRetagger_MakeTag(t *testing.T) {
+	type testStruct struct {
+		testField string
+	}
+
 	type args struct {
 		structureType reflect.Type
 		fieldIndex    int
@@ -15,7 +19,14 @@ func Test_mapstructureRetagger_MakeTag(t *testing.T) {
 		args args
 		want reflect.StructTag
 	}{
-		// TODO: Add test cases.
+		{
+			name: "basic test",
+			args: args{
+				structureType: reflect.TypeOf(testStruct{}),
+				fieldIndex:    0,
+			},
+			want: "mapstructure:\"test_field\"",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
