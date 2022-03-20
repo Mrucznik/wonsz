@@ -10,7 +10,7 @@ import (
 	"reflect"
 )
 
-var cfgOpts *ConfigOpts
+var cfgOpts ConfigOpts
 var cfg interface{}
 var viper *globalViper.Viper
 
@@ -54,8 +54,8 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 	}
 
 	// prepare for processing
-	cfgOpts = &options
-	if cfgOpts != nil && cfgOpts.Viper != nil {
+	cfgOpts = options
+	if cfgOpts.Viper != nil {
 		viper = cfgOpts.Viper
 	} else {
 		viper = globalViper.GetViper()
@@ -122,8 +122,6 @@ func initializeViper() {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
 	}
-
-	cfgOpts = nil
 }
 
 func bindEnvsAndSetDefaults() {
