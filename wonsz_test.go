@@ -20,7 +20,6 @@ func TestInitializeConfig(t *testing.T) {
 }
 
 func ExampleBindConfig() {
-
 	os.Setenv("EXAMPLE_FIELD", "this is my example config field")
 
 	var myConfig struct {
@@ -37,11 +36,9 @@ func ExampleBindConfig() {
 }
 
 func Test_BindConfig_withEnv(t *testing.T) {
-	os.Setenv("TEST_FIELD", "this is my example config field")
 	os.Setenv("SLICE_FIELD", "some,text,here")
 
 	var testConfig struct {
-		TestField  string
 		SliceField []string
 	}
 
@@ -50,13 +47,36 @@ func Test_BindConfig_withEnv(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if testConfig.TestField != "this is my example config field" {
-		t.Errorf("Expected %s, got %s", "this is my example config field", testConfig.TestField)
-	}
-
 	if testConfig.SliceField[0] != "some" ||
 		testConfig.SliceField[1] != "text" ||
 		testConfig.SliceField[2] != "here" {
 		t.Errorf("Expected %s, got %s", "some", testConfig.SliceField[0])
+	}
+}
+
+func Test_BindConfig_withFlag(t *testing.T) {
+	var testConfig struct {
+		SliceField []string
+	}
+
+	rootCmd := &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			if testConfig.SliceField[0] != "some" ||
+				testConfig.SliceField[1] != "text" ||
+				testConfig.SliceField[2] != "here" {
+				t.Errorf("Expected %s, got %s", "some", testConfig.SliceField[0])
+			}
+		},
+	}
+
+	os.Args = []string{"cmd", "--slice-field=some,text,here"}
+
+	err := BindConfig(&testConfig, rootCmd, ConfigOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatal(err)
 	}
 }
