@@ -120,7 +120,7 @@ func initializeViper() {
 		logrus.Infof("Using config file: %v.", viper.ConfigFileUsed())
 	}
 
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := viper.Unmarshal(&cfg, MapstructureDecoder()); err != nil {
 		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
 	}
 }
