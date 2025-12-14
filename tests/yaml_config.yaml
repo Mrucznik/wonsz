@@ -1,0 +1,36 @@
+app_name: ExampleApp
+version: 1.0.0
+debug: true
+start_time: 2025-01-01T12:30:45Z
+start_duration: "1h30m"
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  timeouts:
+    read: 5s
+    write: 10s
+
+database:
+  driver: postgres
+  max_connections: 20
+  replicas:
+    - host: db-replica-1
+      port: 5432
+    - host: db-replica-2
+      port: 5432
+
+users:
+  - name: alice
+    roles:
+      - admin
+      - user
+    meta:
+      team: core
+      active: true
+  - name: bob
+    roles:
+      - user
+    meta:
+      team: ops
+      active: false
