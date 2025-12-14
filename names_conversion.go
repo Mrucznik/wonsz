@@ -3,21 +3,21 @@ package wonsz
 import "unicode"
 
 // camelCaseToDashedLowered converts text from
-// camelCase naming convention (begin new words with capital letter except first word)
+// camelCase naming convention (begin new words with a capital letter except the first word)
 // to kebab-case naming convention (separate words with dashes).
 func camelCaseToDashedLowered(text string) string {
 	return camelCaseToSeparatorsLowered(text, '-')
 }
 
 // camelCaseToUnderscoredLowered converts text from
-// camelCase naming convention (begin new words with capital letter except first word)
+// camelCase naming convention (begin new words with a capital letter except the first word)
 // to snake_case naming convention (separate words with underscores).
 func camelCaseToUnderscoredLowered(text string) string {
 	return camelCaseToSeparatorsLowered(text, '_')
 }
 
 // camelCaseToSeparatorsLowered converts text from
-// camelCase naming convention (begin new words with capital letter except first word)
+// camelCase naming convention (begin new words with a capital letter except the first word)
 // to lowercase text with words separated by specified separator.
 func camelCaseToSeparatorsLowered(text string, separator rune) string {
 	separators := getDesiredSeparatorPositions(text)
@@ -39,10 +39,10 @@ func camelCaseToSeparatorsLowered(text string, separator rune) string {
 }
 
 // getDesiredSeparatorPositions takes as a parameter text in
-// camelCase naming convention (begin new words with capital letter except first word)
-// and returns a places where two words should be separated (as map keys).
-// If word contains a several capital letters in a row, separation will occur before last capital letter.
-// Numbers will also be separated. It skips runes other than letters & numbers.
+// camelCase naming convention (begin new words with a capital letter except the first word)
+// and returns a place where two words should be separated (as map keys).
+// If a word contains several capital letters in a row, separation will occur before the last capital letter.
+// Numbers will also be separated. It skips runes other than letters and numbers.
 func getDesiredSeparatorPositions(text string) map[int]struct{} {
 	separators := map[int]struct{}{}
 	upperSequence := false

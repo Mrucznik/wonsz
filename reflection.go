@@ -11,12 +11,12 @@ type Tag struct {
 	value string
 }
 
-// GetTagsForField extracts field tag names and values from specified structure.
+// GetTagsForField extracts field tag names and values from a specified structure.
 func GetTagsForField(field reflect.StructField) []Tag {
 	tag := field.Tag
 	var tags []Tag
 
-	// this block of code is modification of https://github.com/golang/go/blob/master/src/reflect/type.go#L1191-L1238
+	// this block of code is a modification of https://github.com/golang/go/blob/master/src/reflect/type.go#L1191-L1238
 	// Copyright (c) 2009 The Go Authors. https://github.com/golang/go/blob/master/LICENSE
 	for tag != "" {
 		// Skip leading space.
@@ -31,7 +31,7 @@ func GetTagsForField(field reflect.StructField) []Tag {
 
 		// Scan to colon. A space, a quote or a control character is a syntax error.
 		// Strictly speaking, control chars include the range [0x7f, 0x9f], not just
-		// [0x00, 0x1f], but in practice, we ignore the multi-byte control characters
+		// [0x00, 0x1f], but in practice, we ignore the multibyte control characters
 		// as it is simpler to inspect the tag's bytes than the tag's runes.
 		i = 0
 		for i < len(tag) && tag[i] > ' ' && tag[i] != ':' && tag[i] != '"' && tag[i] != 0x7f {

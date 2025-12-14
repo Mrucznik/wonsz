@@ -10,12 +10,12 @@ import (
 
 // Config is our example config struct.
 type Config struct {
-	// Here you can define configuration fields, that will be automatically bound to config file, env & flags.
+	// Here you can define configuration fields that will be automatically bound to a config file, env and flags.
 	// You don't need to specify additional field tags.
 	// Fields in config will be underscore-separated (snake case).
-	// Environment variables will be all uppercase underscore-separated (screaming snake case).
+	// Environment variables will be all uppercase-underscore-separated (screaming snake case).
 	// Flags will be dash-separated (kebab-case).
-	SnakeName   string // For example, this will become: snake_name in file, SNAKE_NAME for env, and snake-name for flag.
+	SnakeName   string // For example, this will become: snake_name in the file, SNAKE_NAME for env, and snake-name for a flag.
 	SnakeLength int
 	SnakeHappy  bool
 }
@@ -35,16 +35,16 @@ var rootCmd = &cobra.Command{
 }
 
 // You should init your config as first what your application will do,
-// to dodge some problems with referring to config field that is uninitialized.
+// to dodge some problems with referring to the config field that is uninitialized.
 func init() {
-	// We create struct, that will be used for binding values to.
+	// We create a struct that will be used for binding values to.
 	config = &Config{
-		// Here you can specify some default values, when there is no configuration available.
+		// Here you can specify some default values when there is no configuration available.
 		SnakeName: "nope-rope",
 	}
 	err := wonsz.BindConfig(config, rootCmd,
 		// You can specify some additional options to Wonsz, so configuration settings can better meet your needs.
-		// If you want to go with default, you can pass empty struct here.
+		// If you want to go with default, you can pass the empty struct here.
 		wonsz.ConfigOpts{
 			EnvPrefix:   "WONSZ",
 			ConfigPaths: []string{"."},
@@ -71,8 +71,8 @@ func main() {
 // $ WONSZ_SNAKE_NAME="caution ramen" go run .
 // Or command line flag:
 // $ go run . --snake-name "danger noodle"
-// Or without any modifications (then we will get config values from example.json file):
+// Or without any modifications (then we will get config values from the example.json file):
 // $ go run .
 
-// You can also get some help about config variables available to override:
+// You can also get some help with config variables available to override:
 // $ go run . --help

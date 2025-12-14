@@ -32,7 +32,7 @@ type ConfigOpts struct {
 	// Name for the config file. Does not include extension.
 	ConfigName string
 
-	// Pass own viper instance. Default is global viper instance.
+	// Pass own viper instance. Default is a global viper instance.
 	Viper *globalViper.Viper
 }
 
@@ -47,8 +47,8 @@ func GetViper() *globalViper.Viper {
 }
 
 // BindConfig binds configuration structure to config file, environment variables and cobra command flags.
-// The config parameter should be a pointer to configuration structure.
-// You can pass nil to rootCmd, if you don't want to bind cobra command flags with config.
+// The config parameter should be a pointer to the configuration structure.
+// You can pass nil to rootCmd if you don't want to bind cobra command flags with config.
 func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
 	if !(reflect.TypeOf(config).Kind() == reflect.Ptr && reflect.TypeOf(config).Elem().Kind() == reflect.Struct) {
 		return fmt.Errorf("config parameter is not a pointer to a structure. Maybe you should use & operator")
