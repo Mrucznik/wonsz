@@ -2,12 +2,13 @@ package wonsz
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/sevlyar/retag"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	globalViper "github.com/spf13/viper"
-	"reflect"
 )
 
 var cfgOpts ConfigOpts

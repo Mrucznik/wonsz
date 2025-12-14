@@ -2,9 +2,10 @@ package wonsz
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 func TestInitializeConfig(t *testing.T) {
