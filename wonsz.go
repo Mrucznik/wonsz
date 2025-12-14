@@ -18,14 +18,14 @@ var viper *globalViper.Viper
 // ConfigOpts provide additional options to configure Wonsz.
 type ConfigOpts struct {
 	// Environment variables prefix.
-	// E.g. if your prefix is "wonsz", the env registry will look for env variables that start with "WONSZ_".
+	// E.g., if your prefix is "wonsz", the env registry will look for env variables that start with "WONSZ_".
 	EnvPrefix string
 
 	// Paths to search for the config file in.
 	ConfigPaths []string
 
 	// Type of the configuration file, e.g. "json".
-	// Wonsz use Viper for loading the configuration file,
+	// Wonsz uses Viper for loading the configuration file,
 	// so you can use any type of configuration file that Viper supports.
 	ConfigType string
 
@@ -61,7 +61,7 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 	} else {
 		viper = globalViper.GetViper()
 	}
-	cfg = retag.Convert(config, mapstructureRetagger{})
+	cfg = retag.ConvertAny(config, mapstructureRetagger{})
 
 	if rootCmd == nil { // only viper
 		initializeViper()
