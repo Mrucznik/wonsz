@@ -3,6 +3,7 @@ package wonsz
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -114,6 +115,7 @@ func initializeViper() {
 	viper.SetConfigName(cfgOpts.ConfigName)
 
 	bindEnvsAndSetDefaults()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -133,10 +135,60 @@ func initializeViper() {
 
 func bindEnvsAndSetDefaults() {
 	el := reflect.TypeOf(cfg).Elem()
-	for i := 0; i < el.NumField(); i++ {
-		field := el.Field(i)
-		defaultVal := field.Tag.Get("default")
+	processStructFields(el, "")
+}
+
+func processStructFields(t reflect.Type, prefix string) {
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+
 		mapping := field.Tag.Get("mapstructure")
+		if field.Anonymous || mapping == "" {
+			continue
+		}
+		if prefix != "" {
+			mapping = prefix + "." + mapping
+		}
+
+		if field.Type.Kind() == reflect.Struct {
+			if field.Type.String() != "time.Time" {
+				processStructFields(field.Type, mapping)
+				continue
+			}
+		}
+
+		defaultVal := field.Tag.Get("default")
+		if defaultVal != "" {
+			viper.SetDefault(mapping, defaultVal)
+		} else {
+			err := viper.BindEnv(mapping)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		}
+	}
+}
+
+func processStructFieldsV2(t reflect.Type, prefix string) {
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+
+		mapping := field.Tag.Get("mapstructure")
+		if field.Anonymous || mapping == "" {
+			continue
+		}
+		if prefix != "" {
+			mapping = prefix + "." + mapping
+		}
+
+		if field.Type.Kind() == reflect.Struct {
+			if field.Type.String() != "time.Time" {
+				processStructFields(field.Type, mapping)
+				continue
+			}
+		}
+
+		defaultVal := field.Tag.Get("default")
 		if defaultVal != "" {
 			viper.SetDefault(mapping, defaultVal)
 		} else {
