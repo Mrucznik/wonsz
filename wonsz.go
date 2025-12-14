@@ -3,7 +3,9 @@ package wonsz
 import (
 	"fmt"
 	"reflect"
+	"time"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/sevlyar/retag"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -120,7 +122,11 @@ func initializeViper() {
 		logrus.Infof("Using config file: %v.", viper.ConfigFileUsed())
 	}
 
-	if err := viper.Unmarshal(&cfg, MapstructureDecoder()); err != nil {
+	if err := viper.Unmarshal(&cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
+		mapstructure.StringToTimeDurationHookFunc(),
+		mapstructure.StringToSliceHookFunc(","),
+		mapstructure.StringToTimeHookFunc(time.RFC3339),
+	))); err != nil {
 		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
 	}
 }
@@ -131,7 +137,6 @@ func bindEnvsAndSetDefaults() {
 		field := el.Field(i)
 		defaultVal := field.Tag.Get("default")
 		mapping := field.Tag.Get("mapstructure")
-
 		if defaultVal != "" {
 			viper.SetDefault(mapping, defaultVal)
 		} else {
