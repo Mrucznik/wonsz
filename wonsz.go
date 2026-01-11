@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sevlyar/retag"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	globalViper "github.com/spf13/viper"
@@ -34,6 +33,7 @@ type ConfigOpts struct {
 	ConfigType string
 
 	// Name for the config file. Does not include extension.
+	// If no configuration name is specified, Wonsz will not throw an error if the config file is not found.
 	ConfigName string
 
 	// Pass own viper instance. Default is a global viper instance.
@@ -71,10 +71,14 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 	cfg = retag.ConvertAny(config, mapstructureRetagger{})
 
 	if rootCmd == nil { // only viper
-		initializeViper()
-		return nil
+		return initializeViper()
 	}
-	cobra.OnInitialize(initializeViper)
+	cobra.OnInitialize(func() {
+		err := initializeViper()
+		if err != nil {
+			panic(fmt.Errorf("panic from WONSZ lib: cannot initialize viper: %w", err))
+		}
+	})
 
 	confType := reflect.TypeOf(cfg).Elem()
 	return bindFieldsRecursive(rootCmd.PersistentFlags(), confType, "", "")
@@ -131,7 +135,7 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 	return nil
 }
 
-func initializeViper() {
+func initializeViper() error {
 	viper.SetEnvPrefix(cfgOpts.EnvPrefix)
 
 	for _, path := range cfgOpts.ConfigPaths {
@@ -140,31 +144,36 @@ func initializeViper() {
 	viper.SetConfigType(cfgOpts.ConfigType)
 	viper.SetConfigName(cfgOpts.ConfigName)
 
-	bindEnvsAndSetDefaults()
+	err := bindEnvsAndSetDefaults()
+	if err != nil {
+		return fmt.Errorf("cannot bind env variables, err: %w", err)
+	}
+
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
-		logrus.Infof("Config file not found.")
-	} else {
-		logrus.Infof("Using config file: %v.", viper.ConfigFileUsed())
+	if err = viper.ReadInConfig(); err != nil {
+		if cfgOpts.ConfigName != "" {
+			return fmt.Errorf("cannot read config file: %w", err)
+		}
 	}
 
-	if err := viper.Unmarshal(&cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
+	if err = viper.Unmarshal(&cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
 		mapstructure.StringToTimeDurationHookFunc(),
 		mapstructure.StringToSliceHookFunc(","),
 		mapstructure.StringToTimeHookFunc(time.RFC3339),
 	))); err != nil {
-		logrus.WithError(err).Fatal("Cannot unmarshall config into Config struct.")
+		return fmt.Errorf("cannot unmarshal config into config struct: %w", err)
 	}
+	return nil
 }
 
-func bindEnvsAndSetDefaults() {
+func bindEnvsAndSetDefaults() error {
 	el := reflect.TypeOf(cfg).Elem()
-	processStructFields(el, "")
+	return processStructFields(el, "")
 }
 
-func processStructFields(t reflect.Type, prefix string) {
+func processStructFields(t reflect.Type, prefix string) error {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 
@@ -178,7 +187,10 @@ func processStructFields(t reflect.Type, prefix string) {
 
 		if field.Type.Kind() == reflect.Struct {
 			if field.Type.String() != "time.Time" {
-				processStructFields(field.Type, mapping)
+				err := processStructFields(field.Type, mapping)
+				if err != nil {
+					return err
+				}
 				continue
 			}
 		}
@@ -189,10 +201,11 @@ func processStructFields(t reflect.Type, prefix string) {
 		} else {
 			err := viper.BindEnv(mapping)
 			if err != nil {
-				logrus.Fatal(err)
+				return err
 			}
 		}
 	}
+	return nil
 }
 
 func bindPFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, shortcut, usageHint string) error {

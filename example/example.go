@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/Mrucznik/wonsz"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -47,15 +46,14 @@ func init() {
 		// If you want to go with default, you can pass the empty struct here.
 		wonsz.ConfigOpts{
 			EnvPrefix:   "WONSZ",
-			ConfigPaths: []string{"."},
+			ConfigPaths: []string{".", "./example"},
 			ConfigType:  "json",
 			ConfigName:  "example",
 		},
 	)
 	// Here we should check, if config was created successfully.
 	if err != nil {
-		logrus.WithError(err).Fatal("cannot load config")
-		return
+		panic(fmt.Errorf("cannot initialize config: %w", err))
 	}
 }
 
@@ -63,7 +61,7 @@ func main() {
 	// we execute our application
 	err := rootCmd.Execute()
 	if err != nil {
-		logrus.WithError(err).Fatal("application failed to execute")
+		panic(fmt.Errorf("application failed to execute: %w", err))
 	}
 }
 
