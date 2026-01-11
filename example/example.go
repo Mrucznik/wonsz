@@ -51,7 +51,7 @@ func init() {
 			ConfigName:  "example",
 		},
 	)
-	// Here we should check, if config was created successfully.
+	// Here we should check if config was created successfully.
 	if err != nil {
 		panic(fmt.Errorf("cannot initialize config: %w", err))
 	}

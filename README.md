@@ -7,7 +7,7 @@
 ---
 
 **The best of Viper & Cobra combined.**  
-Ready to go solution for configurable CLI programs.
+Bind your config struct to CLI flags, environment variables, and configuration files.
 
 ![example workflow](https://github.com/Mrucznik/wonsz/actions/workflows/go.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Mrucznik/wonsz)](https://goreportcard.com/report/github.com/Mrucznik/wonsz)
@@ -15,7 +15,7 @@ Ready to go solution for configurable CLI programs.
 
 ## What does it do?
 
-It creates a configuration struct, that fields are automatically bound to:
+It creates a configuration struct that fields are automatically bound to:
 
 1. configuration file
 2. environment variables
@@ -25,13 +25,13 @@ It creates a configuration struct, that fields are automatically bound to:
 
 - Let's say you want to write a configurable app.
 
-> So, I use viper to load configuration from file. I fetch configuration fields by `viper.Get(key)`.
+> So, I use viper to load configuration from a file. I fetch configuration fields by `viper.Get(key)`.
 
-- But it sucks to not have autocompletion from IDE.
+- But it sucks to not have autocompletion from the IDE.
 
 > So, I marshall your config to a struct.
 
-- But let's say, you dockerized your app and when you run containers, you want also to manage config by environment
+- But let's say, you dockerized your app, and when you run containers, you want also to manage config by environment
   variables.
 
 > So, I use AutomaticEnv to get env variables.
@@ -40,7 +40,7 @@ It creates a configuration struct, that fields are automatically bound to:
 
 > I would bind them by viper.BindEnv().
 
-- But you have config struct field named like: ThisIsMyConfigField, so you must set THISISMYCONFIGFIELD env variable,
+- But you have a config struct field named like: ThisIsMyConfigField, so you must set THISISMYCONFIGFIELD env variable,
   which is not really readable and nice.
 
 > :/
@@ -106,7 +106,7 @@ func execute(_ *cobra.Command, _ []string) {
 }
 ```
 
-This is the simplest example, more detailed [you will find here](example/example.go).
+This is the simplest example, more production-ready and detailed [you will find here](example/example.go). You can also look at [tests](tests/config_test.go).
 
 ### Integrate with an existing application
 
@@ -180,9 +180,9 @@ func init() {
 
 ## Key concepts
 
-- names in configurations files should be in snake_case
+- keys in configuration files should be in snake_case
 - environment variables are in SCREAMING_SNAKE_CASE
-- command-line flags names should be dash separated
+- command-line flags names should be dash-separated
 
 ## Detailed configuration options
 
