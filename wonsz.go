@@ -91,6 +91,10 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 			continue
 		}
 
+		if field.Tag.Get("wonsz-flag-ignore") != "" {
+			continue
+		}
+
 		dashedName := camelCaseToDashedLowered(field.Name)
 		underscoredName := camelCaseToUnderscoredLowered(field.Name)
 		mappingName := underscoredName
@@ -120,7 +124,9 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 			if cfgOpts.IgnoreViperBindErrors {
 				continue
 			}
-			return err
+			return fmt.Errorf("cannot bind flag %s: %w. "+
+				"You can ignore this error by setting IgnoreViperBindErrors to true"+
+				"or adding wonsz-flag-ignore annotation to field", dashedName, err)
 		}
 
 		targetFlag := flags.Lookup(dashedName)
