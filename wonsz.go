@@ -77,19 +77,41 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 	cobra.OnInitialize(initializeViper)
 
 	confType := reflect.TypeOf(cfg).Elem()
-	for i := 0; i < confType.NumField(); i++ {
-		field := confType.Field(i)
+	return bindFieldsRecursive(rootCmd.PersistentFlags(), confType, "", "")
+}
+
+func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappingPrefix string) error {
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
 		if field.Anonymous {
 			continue
 		}
+
 		dashedName := camelCaseToDashedLowered(field.Name)
 		underscoredName := camelCaseToUnderscoredLowered(field.Name)
+		mappingName := underscoredName
 
-		var err error
-		flags := rootCmd.PersistentFlags()
+		if namePrefix != "" {
+			dashedName = namePrefix + "-" + dashedName
+		}
+		if mappingPrefix != "" {
+			mappingName = mappingPrefix + "." + underscoredName
+		}
+
+		// Handle nested structs (excluding special types like time.Time)
+		if field.Type.Kind() == reflect.Struct &&
+			field.Type != reflect.TypeOf(time.Time{}) &&
+			field.Type != reflect.TypeOf(net.IP{}) &&
+			field.Type != reflect.TypeOf(net.IPNet{}) {
+			if err := bindFieldsRecursive(flags, field.Type, dashedName, mappingName); err != nil {
+				return err
+			}
+			continue
+		}
+
 		usageHint := field.Tag.Get("usage")
 		shortcut, _ := field.Tag.Lookup("shortcut")
-		err = bindPFlag(flags, field, dashedName, shortcut, usageHint)
+		err := bindPFlag(flags, field, dashedName, shortcut, usageHint)
 		if err != nil {
 			if cfgOpts.IgnoreViperBindErrors {
 				continue
@@ -101,7 +123,7 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 		if targetFlag == nil {
 			return fmt.Errorf("flag %s not found, despite successful binding", dashedName)
 		}
-		err = viper.BindPFlag(underscoredName, targetFlag)
+		err = viper.BindPFlag(mappingName, targetFlag)
 		if err != nil {
 			return err
 		}
