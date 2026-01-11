@@ -57,7 +57,7 @@ func GetViper() *globalViper.Viper {
 // The config parameter should be a pointer to the configuration structure.
 // You can pass nil to rootCmd if you don't want to bind cobra command flags with config.
 func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
-	if !(reflect.TypeOf(config).Kind() == reflect.Ptr && reflect.TypeOf(config).Elem().Kind() == reflect.Struct) {
+	if reflect.TypeOf(config).Kind() != reflect.Ptr || reflect.TypeOf(config).Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("config parameter is not a pointer to a structure. Maybe you should use & operator")
 	}
 

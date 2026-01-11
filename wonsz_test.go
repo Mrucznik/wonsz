@@ -21,7 +21,7 @@ func TestInitializeConfig(t *testing.T) {
 }
 
 func ExampleBindConfig() {
-	os.Setenv("EXAMPLE_FIELD", "this is my example config field")
+	_ = os.Setenv("EXAMPLE_FIELD", "this is my example config field")
 
 	var myConfig struct {
 		ExampleField string
@@ -37,7 +37,7 @@ func ExampleBindConfig() {
 }
 
 func Test_BindConfig_withEnv(t *testing.T) {
-	os.Setenv("SLICE_FIELD", "some,text,here")
+	_ = os.Setenv("SLICE_FIELD", "some,text,here")
 
 	var testConfig struct {
 		SliceField []string
