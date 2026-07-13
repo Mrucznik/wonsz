@@ -16,6 +16,7 @@ import (
 
 var cfgOpts ConfigOpts
 var cfg interface{}
+var originalCfg interface{}
 var viper *globalViper.Viper
 
 // ConfigOpts provide additional options to configure Wonsz.
@@ -44,9 +45,10 @@ type ConfigOpts struct {
 	IgnoreViperBindErrors bool
 }
 
-// Get returns a config struct instance to which Wonsz binds configuration.
+// Get returns the config struct instance passed to BindConfig.
+// The result can be type-asserted back to the original pointer type.
 func Get() interface{} {
-	return cfg
+	return originalCfg
 }
 
 // GetViper returns a viper instance used by Wonsz.
@@ -69,6 +71,7 @@ func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) 
 	} else {
 		viper = globalViper.GetViper()
 	}
+	originalCfg = config
 	cfg = retag.ConvertAny(config, mapstructureRetagger{})
 
 	if rootCmd == nil { // only viper

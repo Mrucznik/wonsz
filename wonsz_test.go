@@ -164,6 +164,29 @@ func Test_BindConfig_ipFieldsFromFlags(t *testing.T) {
 	}
 }
 
+func TestGetReturnsOriginalPointer(t *testing.T) {
+	t.Setenv("MY_FIELD", "from-env")
+
+	type conf struct{ MyField string }
+	var c conf
+
+	err := BindConfig(&c, nil, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, ok := Get().(*conf)
+	if !ok {
+		t.Fatalf("Get() returned %T, want *conf", Get())
+	}
+	if got != &c {
+		t.Error("Get() should return the same pointer that was passed to BindConfig")
+	}
+	if got.MyField != "from-env" {
+		t.Errorf("MyField: got %q, want %q", got.MyField, "from-env")
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string
