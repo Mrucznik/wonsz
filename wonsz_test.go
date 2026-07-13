@@ -228,6 +228,29 @@ func Test_BindConfig_pointerToStructField(t *testing.T) {
 	}
 }
 
+func Test_BindConfig_defaultTagWithEnv(t *testing.T) {
+	type conf struct {
+		Field string `default:"default-value"`
+	}
+
+	var withDefault conf
+	if err := BindConfig(&withDefault, nil, ConfigOpts{Viper: globalViper.New()}); err != nil {
+		t.Fatal(err)
+	}
+	if withDefault.Field != "default-value" {
+		t.Errorf("Field: got %q, want %q", withDefault.Field, "default-value")
+	}
+
+	t.Setenv("FIELD", "env-value")
+	var withEnv conf
+	if err := BindConfig(&withEnv, nil, ConfigOpts{Viper: globalViper.New()}); err != nil {
+		t.Fatal(err)
+	}
+	if withEnv.Field != "env-value" {
+		t.Errorf("Field: got %q, want %q (env should override the default tag)", withEnv.Field, "env-value")
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string
