@@ -118,9 +118,13 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 			mappingName = mappingPrefix + "." + underscoredName
 		}
 
-		// Handle nested structs (excluding special types like time.Time)
-		if isNestedStruct(field.Type) {
-			if err := bindFieldsRecursive(flags, field.Type, dashedName, mappingName); err != nil {
+		// Handle nested structs, also behind pointers (excluding special types like time.Time)
+		nestedType := field.Type
+		if nestedType.Kind() == reflect.Ptr {
+			nestedType = nestedType.Elem()
+		}
+		if isNestedStruct(nestedType) {
+			if err := bindFieldsRecursive(flags, nestedType, dashedName, mappingName); err != nil {
 				return err
 			}
 			continue
@@ -242,8 +246,12 @@ func processStructFields(t reflect.Type, prefix string) error {
 			mapping = prefix + "." + mapping
 		}
 
-		if isNestedStruct(field.Type) {
-			err := processStructFields(field.Type, mapping)
+		nestedType := field.Type
+		if nestedType.Kind() == reflect.Ptr {
+			nestedType = nestedType.Elem()
+		}
+		if isNestedStruct(nestedType) {
+			err := processStructFields(nestedType, mapping)
 			if err != nil {
 				return err
 			}

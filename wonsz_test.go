@@ -201,6 +201,33 @@ func Test_BindConfig_invalidShortcut(t *testing.T) {
 	}
 }
 
+func Test_BindConfig_pointerToStructField(t *testing.T) {
+	type Inner struct {
+		Port int
+	}
+	var testConfig struct {
+		Server *Inner
+	}
+
+	cmd := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	err := BindConfig(&testConfig, cmd, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmd.SetArgs([]string{"--server-port", "9090"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if testConfig.Server == nil {
+		t.Fatal("Server: got nil, want allocated struct")
+	}
+	if testConfig.Server.Port != 9090 {
+		t.Errorf("Server.Port: got %d, want %d", testConfig.Server.Port, 9090)
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string
