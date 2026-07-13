@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Mrucznik/wonsz/internal/retag"
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sevlyar/retag"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	globalViper "github.com/spf13/viper"
