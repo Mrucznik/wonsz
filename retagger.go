@@ -14,6 +14,11 @@ func (m mapstructureRetagger) MakeTag(structureType reflect.Type, fieldIndex int
 	field := structureType.Field(fieldIndex)
 	mapping := camelCaseToUnderscoredLowered(field.Name)
 
+	// wonsz:"-" excludes the field from all bindings.
+	if field.Tag.Get("wonsz") == "-" {
+		mapping = "-"
+	}
+
 	tags := GetTagsForField(field)
 	for i := range tags {
 		if tags[i].name == "mapstructure" {

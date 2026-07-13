@@ -251,6 +251,38 @@ func Test_BindConfig_defaultTagWithEnv(t *testing.T) {
 	}
 }
 
+func Test_BindConfig_wonszDashExcludesField(t *testing.T) {
+	t.Setenv("EXCLUDED", "from-env")
+	t.Setenv("INCLUDED", "from-env")
+
+	var testConfig struct {
+		Excluded string `wonsz:"-"`
+		Included string
+	}
+
+	cmd := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	err := BindConfig(&testConfig, cmd, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cmd.PersistentFlags().Lookup("excluded") != nil {
+		t.Error(`field with wonsz:"-" should not be bound to a flag`)
+	}
+
+	cmd.SetArgs([]string{})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if testConfig.Excluded != "" {
+		t.Errorf(`Excluded: got %q, want "" (field with wonsz:"-" should not be populated)`, testConfig.Excluded)
+	}
+	if testConfig.Included != "from-env" {
+		t.Errorf("Included: got %q, want %q", testConfig.Included, "from-env")
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string

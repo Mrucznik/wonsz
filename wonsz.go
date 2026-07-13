@@ -238,8 +238,8 @@ func processStructFields(t reflect.Type, prefix string) error {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 
-		mapping := field.Tag.Get("mapstructure")
-		if field.Anonymous || mapping == "" {
+		mapping := strings.Split(field.Tag.Get("mapstructure"), ",")[0]
+		if field.Anonymous || mapping == "" || mapping == "-" {
 			continue
 		}
 		if prefix != "" {
