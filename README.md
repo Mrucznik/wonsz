@@ -67,7 +67,7 @@ It creates a configuration struct that fields are automatically bound to:
 Import dependency into your project.
 
 ```shell
-go get -d github.com/Mrucznik/wonsz
+go get github.com/Mrucznik/wonsz
 ```
 
 ## How to use?
