@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	globalViper "github.com/spf13/viper"
 )
 
 func TestInitializeConfig(t *testing.T) {
@@ -87,6 +88,31 @@ func Test_BindConfig_flagIgnoreTagValue(t *testing.T) {
 	}
 	if cmd.PersistentFlags().Lookup("skipped") != nil {
 		t.Error(`field with wonsz-flag-ignore:"true" should not be bound to a flag`)
+	}
+}
+
+func Test_BindConfig_customMapstructureTag(t *testing.T) {
+	var testConfig struct {
+		FieldOne string `mapstructure:"custom_name"`
+	}
+
+	cmd := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	err := BindConfig(&testConfig, cmd, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cmd.PersistentFlags().Lookup("custom-name") == nil {
+		t.Fatal("flag name should be derived from the mapstructure tag")
+	}
+
+	cmd.SetArgs([]string{"--custom-name", "from-flag"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if testConfig.FieldOne != "from-flag" {
+		t.Errorf("FieldOne: got %q, want %q", testConfig.FieldOne, "from-flag")
 	}
 }
 

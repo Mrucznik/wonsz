@@ -95,8 +95,16 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 			continue
 		}
 
-		dashedName := camelCaseToDashedLowered(field.Name)
-		underscoredName := camelCaseToUnderscoredLowered(field.Name)
+		// The retagged config type always carries a mapstructure tag; a custom tag
+		// set by the user takes precedence over the name derived from the field name.
+		underscoredName := strings.Split(field.Tag.Get("mapstructure"), ",")[0]
+		if underscoredName == "-" {
+			continue
+		}
+		if underscoredName == "" {
+			underscoredName = camelCaseToUnderscoredLowered(field.Name)
+		}
+		dashedName := strings.ReplaceAll(underscoredName, "_", "-")
 		mappingName := underscoredName
 
 		if namePrefix != "" {
