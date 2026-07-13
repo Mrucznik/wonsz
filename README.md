@@ -94,11 +94,16 @@ type Configuration struct {
 var rootCmd = &cobra.Command{Run: execute}
 
 func main() {
-	wonsz.BindConfig(&config, // pointer to the configuration struct
+	err := wonsz.BindConfig(&config, // pointer to the configuration struct
 		rootCmd,            // root cobra command
 		wonsz.ConfigOpts{}) // Wonsz configuration options
+	if err != nil {
+		panic(err)
+	}
 
-	rootCmd.Execute()
+	if err := rootCmd.Execute(); err != nil {
+		panic(err)
+	}
 }
 
 func execute(_ *cobra.Command, _ []string) {
@@ -138,8 +143,10 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	wonsz.BindConfig(&config.Config, rootCmd, wonsz.ConfigOpts{})
-	
+	if err := wonsz.BindConfig(&config.Config, rootCmd, wonsz.ConfigOpts{}); err != nil {
+		panic(err)
+	}
+
 	// other code
 }
 
