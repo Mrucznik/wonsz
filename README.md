@@ -149,7 +149,7 @@ func init() {
 ### Configure and run your application with
 
 - **default struct values**
-  ```cgo
+  ```go
   config := &Config{
       SnakeName: "nope-rope",
   }
