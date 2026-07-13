@@ -220,7 +220,7 @@ All tags are optional:
 - `EnvPrefix` — prefix for environment variables (`"WONSZ"` → `WONSZ_SNAKE_NAME`).
 - `ConfigPaths`, `ConfigType`, `ConfigName` — where and how to look for the config file.
 - `Viper` — pass your own viper instance (defaults to the global one).
-- `IgnoreViperBindErrors` — skip fields that cannot be bound to flags instead of returning an error.
+- `IgnoreFlagBindErrors` — skip fields that cannot be bound to flags instead of returning an error.
 - `WatchConfig` — watch the config file and re-unmarshal the struct when it changes.
 
 ## Multiple configs

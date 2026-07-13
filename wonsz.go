@@ -48,7 +48,7 @@ type ConfigOpts struct {
 
 	// If true, Wonsz will not return an error if a config field cannot be bound to a flag
 	// or the resulting flag cannot be bound to viper. Such fields are silently skipped.
-	IgnoreViperBindErrors bool
+	IgnoreFlagBindErrors bool
 
 	// If true, Wonsz watches the config file and re-unmarshals the config struct
 	// when the file changes. Note that the struct is updated from a background
@@ -165,11 +165,11 @@ func (w *Wonsz[T]) bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, nam
 		}
 		err := bindPFlag(flags, field, dashedName, shortcut, usageHint)
 		if err != nil {
-			if w.opts.IgnoreViperBindErrors {
+			if w.opts.IgnoreFlagBindErrors {
 				continue
 			}
 			return fmt.Errorf("cannot bind flag %s: %w. "+
-				"You can ignore this error by setting IgnoreViperBindErrors to true "+
+				"You can ignore this error by setting IgnoreFlagBindErrors to true "+
 				"or by adding the wonsz-flag-ignore annotation to the field", dashedName, err)
 		}
 
@@ -179,7 +179,7 @@ func (w *Wonsz[T]) bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, nam
 		}
 		err = w.viper.BindPFlag(mappingName, targetFlag)
 		if err != nil {
-			if w.opts.IgnoreViperBindErrors {
+			if w.opts.IgnoreFlagBindErrors {
 				continue
 			}
 			return fmt.Errorf("cannot bind flag %s to viper key %s: %w", dashedName, mappingName, err)

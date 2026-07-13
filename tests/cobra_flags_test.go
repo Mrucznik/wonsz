@@ -26,7 +26,7 @@ func TestConfigCobraFlags(t *testing.T) {
 		ConfigType:            "json",
 		ConfigName:            "empty_config",
 		Viper:                 viper.New(),
-		IgnoreViperBindErrors: false,
+		IgnoreFlagBindErrors: false,
 	}
 
 	if err := wonsz.BindConfig(&config, cmd, opts); err != nil {

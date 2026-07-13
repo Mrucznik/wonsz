@@ -69,7 +69,7 @@ func Test_BindConfig_unsupportedTypeErrorMessage(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error for unsupported field type, got nil")
 	}
-	if !strings.Contains(err.Error(), "IgnoreViperBindErrors to true or by adding") {
+	if !strings.Contains(err.Error(), "IgnoreFlagBindErrors to true or by adding") {
 		t.Errorf("malformed error message: %q", err.Error())
 	}
 }
