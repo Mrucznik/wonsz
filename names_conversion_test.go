@@ -40,6 +40,11 @@ func Test_camelCaseToDashedLowered(t *testing.T) {
 			textToConvert: "userWith5BANSButNoMoreTHAN100Ok1200ok",
 			want:          "user-with-5-bans-but-no-more-than-100-ok-1200-ok",
 		},
+		{
+			name:          "non-ASCII letters",
+			textToConvert: "ŁadnyWąż",
+			want:          "ładny-wąż",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -86,6 +91,11 @@ func Test_camelCaseToUnderscoredLowered(t *testing.T) {
 			name:          "numbers in name",
 			textToConvert: "userWith5BANSButNoMoreTHAN100Ok1200ok",
 			want:          "user_with_5_bans_but_no_more_than_100_ok_1200_ok",
+		},
+		{
+			name:          "non-ASCII letters",
+			textToConvert: "ŁadnyWąż",
+			want:          "ładny_wąż",
 		},
 	}
 	for _, tt := range tests {

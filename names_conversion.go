@@ -20,20 +20,15 @@ func camelCaseToUnderscoredLowered(text string) string {
 // camelCase naming convention (begin new words with a capital letter except the first word)
 // to lowercase text with words separated by specified separator.
 func camelCaseToSeparatorsLowered(text string, separator rune) string {
-	separators := getDesiredSeparatorPositions(text)
+	runes := []rune(text)
+	separators := getDesiredSeparatorPositions(runes)
 
-	newLen := len(text) + len(separators)
-	converted := make([]rune, newLen)
-	insertedSeparators := 0
-	for i, letter := range text {
-		idx := i + insertedSeparators
+	converted := make([]rune, 0, len(runes)+len(separators))
+	for i, letter := range runes {
 		if _, ok := separators[i]; ok {
-			converted[idx] = separator
-			insertedSeparators++
-			idx++
+			converted = append(converted, separator)
 		}
-		lowered := unicode.ToLower(letter)
-		converted[idx] = lowered
+		converted = append(converted, unicode.ToLower(letter))
 	}
 	return string(converted)
 }
@@ -43,13 +38,13 @@ func camelCaseToSeparatorsLowered(text string, separator rune) string {
 // and returns a place where two words should be separated (as map keys).
 // If a word contains several capital letters in a row, separation will occur before the last capital letter.
 // Numbers will also be separated. It skips runes other than letters and numbers.
-func getDesiredSeparatorPositions(text string) map[int]struct{} {
+func getDesiredSeparatorPositions(text []rune) map[int]struct{} {
 	separators := map[int]struct{}{}
 	upperSequence := false
 	numberSequence := false
 	for i, j := 0, 1; j < len(text); i, j = i+1, j+1 {
-		letter := rune(text[i])
-		nextLetter := rune(text[j])
+		letter := text[i]
+		nextLetter := text[j]
 
 		if !unicode.IsLetter(letter) && !unicode.IsNumber(letter) {
 			continue
