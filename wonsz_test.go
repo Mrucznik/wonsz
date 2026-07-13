@@ -324,6 +324,52 @@ func Test_BindConfig_watchConfig(t *testing.T) {
 	t.Errorf("WatchedField: got %q, want %q after config file change", testConfig.WatchedField, "updated")
 }
 
+func TestNewIndependentInstances(t *testing.T) {
+	t.Setenv("FIRST_FIELD", "first")
+	t.Setenv("SECOND_FIELD", "second")
+
+	type confA struct{ FirstField string }
+	type confB struct{ SecondField string }
+	var a confA
+	var b confB
+
+	cmdA := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	cmdB := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+
+	wA, err := New(&a, cmdA, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wB, err := New(&b, cmdB, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Deferred (cobra.OnInitialize) initialization of the first instance must
+	// not be clobbered by the second New call.
+	cmdA.SetArgs([]string{})
+	if err := cmdA.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	cmdB.SetArgs([]string{})
+	if err := cmdB.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if a.FirstField != "first" {
+		t.Errorf("FirstField: got %q, want %q", a.FirstField, "first")
+	}
+	if b.SecondField != "second" {
+		t.Errorf("SecondField: got %q, want %q", b.SecondField, "second")
+	}
+	if got, ok := wA.Get().(*confA); !ok || got != &a {
+		t.Errorf("wA.Get() should return the bound *confA pointer, got %T", wA.Get())
+	}
+	if wA.Viper() == wB.Viper() {
+		t.Error("instances should keep separate viper instances")
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string

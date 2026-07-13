@@ -15,10 +15,18 @@ import (
 	globalViper "github.com/spf13/viper"
 )
 
-var cfgOpts ConfigOpts
-var cfg interface{}
-var originalCfg interface{}
-var viper *globalViper.Viper
+// Wonsz binds a single configuration struct to a config file, environment
+// variables and cobra command flags. Create instances with New; each instance
+// keeps its own options and viper, so multiple configs can coexist.
+type Wonsz struct {
+	opts        ConfigOpts
+	cfg         interface{} // retagged copy sharing memory with originalCfg
+	originalCfg interface{}
+	viper       *globalViper.Viper
+}
+
+// defaultWonsz backs the package-level BindConfig/Get/GetViper API.
+var defaultWonsz *Wonsz
 
 // ConfigOpts provide additional options to configure Wonsz.
 type ConfigOpts struct {
@@ -54,47 +62,74 @@ type ConfigOpts struct {
 // Get returns the config struct instance passed to BindConfig.
 // The result can be type-asserted back to the original pointer type.
 func Get() interface{} {
-	return originalCfg
+	if defaultWonsz == nil {
+		return nil
+	}
+	return defaultWonsz.Get()
 }
 
 // GetViper returns a viper instance used by Wonsz.
 func GetViper() *globalViper.Viper {
-	return viper
+	if defaultWonsz == nil {
+		return nil
+	}
+	return defaultWonsz.Viper()
 }
 
 // BindConfig binds configuration structure to config file, environment variables and cobra command flags.
 // The config parameter should be a pointer to the configuration structure.
 // You can pass nil to rootCmd if you don't want to bind cobra command flags with config.
+// It uses a package-level default instance; to bind multiple independent configs use New.
 func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
+	w, err := New(config, rootCmd, options)
+	if w != nil {
+		defaultWonsz = w
+	}
+	return err
+}
+
+// New binds the configuration structure like BindConfig, but returns an
+// independent Wonsz instance instead of using package-level state.
+func New(config interface{}, rootCmd *cobra.Command, options ConfigOpts) (*Wonsz, error) {
 	if reflect.TypeOf(config).Kind() != reflect.Ptr || reflect.TypeOf(config).Elem().Kind() != reflect.Struct {
-		return fmt.Errorf("config parameter is not a pointer to a structure. Maybe you should use & operator")
+		return nil, fmt.Errorf("config parameter is not a pointer to a structure. Maybe you should use & operator")
 	}
 
 	// prepare for processing
-	cfgOpts = options
-	if cfgOpts.Viper != nil {
-		viper = cfgOpts.Viper
+	w := &Wonsz{opts: options, originalCfg: config}
+	if options.Viper != nil {
+		w.viper = options.Viper
 	} else {
-		viper = globalViper.GetViper()
+		w.viper = globalViper.GetViper()
 	}
-	originalCfg = config
-	cfg = retag.ConvertAny(config, mapstructureRetagger{})
+	w.cfg = retag.ConvertAny(config, mapstructureRetagger{})
 
 	if rootCmd == nil { // only viper
-		return initializeViper()
+		return w, w.initializeViper()
 	}
 	cobra.OnInitialize(func() {
-		err := initializeViper()
+		err := w.initializeViper()
 		if err != nil {
 			panic(fmt.Errorf("panic from WONSZ lib: cannot initialize viper: %w", err))
 		}
 	})
 
-	confType := reflect.TypeOf(cfg).Elem()
-	return bindFieldsRecursive(rootCmd.PersistentFlags(), confType, "", "")
+	confType := reflect.TypeOf(w.cfg).Elem()
+	return w, w.bindFieldsRecursive(rootCmd.PersistentFlags(), confType, "", "")
 }
 
-func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappingPrefix string) error {
+// Get returns the config struct instance passed to New.
+// The result can be type-asserted back to the original pointer type.
+func (w *Wonsz) Get() interface{} {
+	return w.originalCfg
+}
+
+// Viper returns the viper instance used by this Wonsz instance.
+func (w *Wonsz) Viper() *globalViper.Viper {
+	return w.viper
+}
+
+func (w *Wonsz) bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappingPrefix string) error {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		if field.Anonymous {
@@ -130,7 +165,7 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 			nestedType = nestedType.Elem()
 		}
 		if isNestedStruct(nestedType) {
-			if err := bindFieldsRecursive(flags, nestedType, dashedName, mappingName); err != nil {
+			if err := w.bindFieldsRecursive(flags, nestedType, dashedName, mappingName); err != nil {
 				return err
 			}
 			continue
@@ -144,7 +179,7 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 		}
 		err := bindPFlag(flags, field, dashedName, shortcut, usageHint)
 		if err != nil {
-			if cfgOpts.IgnoreViperBindErrors {
+			if w.opts.IgnoreViperBindErrors {
 				continue
 			}
 			return fmt.Errorf("cannot bind flag %s: %w. "+
@@ -156,9 +191,9 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 		if targetFlag == nil {
 			return fmt.Errorf("flag %s not found, despite successful binding", dashedName)
 		}
-		err = viper.BindPFlag(mappingName, targetFlag)
+		err = w.viper.BindPFlag(mappingName, targetFlag)
 		if err != nil {
-			if cfgOpts.IgnoreViperBindErrors {
+			if w.opts.IgnoreViperBindErrors {
 				continue
 			}
 			return fmt.Errorf("cannot bind flag %s to viper key %s: %w", dashedName, mappingName, err)
@@ -200,41 +235,41 @@ func stringToRetaggedIPNetHookFunc() mapstructure.DecodeHookFuncType {
 	}
 }
 
-func initializeViper() error {
-	viper.SetEnvPrefix(cfgOpts.EnvPrefix)
+func (w *Wonsz) initializeViper() error {
+	w.viper.SetEnvPrefix(w.opts.EnvPrefix)
 
-	for _, path := range cfgOpts.ConfigPaths {
-		viper.AddConfigPath(path)
+	for _, path := range w.opts.ConfigPaths {
+		w.viper.AddConfigPath(path)
 	}
-	viper.SetConfigType(cfgOpts.ConfigType)
-	viper.SetConfigName(cfgOpts.ConfigName)
+	w.viper.SetConfigType(w.opts.ConfigType)
+	w.viper.SetConfigName(w.opts.ConfigName)
 
-	err := bindEnvsAndSetDefaults()
+	err := w.bindEnvsAndSetDefaults()
 	if err != nil {
 		return fmt.Errorf("cannot bind env variables, err: %w", err)
 	}
 
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
+	w.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	w.viper.AutomaticEnv()
 
-	if err = viper.ReadInConfig(); err != nil {
-		if cfgOpts.ConfigName != "" {
+	if err = w.viper.ReadInConfig(); err != nil {
+		if w.opts.ConfigName != "" {
 			return fmt.Errorf("cannot read config file: %w", err)
 		}
 	}
 
-	if cfgOpts.WatchConfig {
-		viper.OnConfigChange(func(fsnotify.Event) {
-			_ = unmarshalConfig()
+	if w.opts.WatchConfig {
+		w.viper.OnConfigChange(func(fsnotify.Event) {
+			_ = w.unmarshalConfig()
 		})
-		viper.WatchConfig()
+		w.viper.WatchConfig()
 	}
 
-	return unmarshalConfig()
+	return w.unmarshalConfig()
 }
 
-func unmarshalConfig() error {
-	if err := viper.Unmarshal(&cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
+func (w *Wonsz) unmarshalConfig() error {
+	if err := w.viper.Unmarshal(&w.cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
 		mapstructure.StringToTimeDurationHookFunc(),
 		mapstructure.StringToIPHookFunc(),
 		stringToRetaggedIPNetHookFunc(),
@@ -246,12 +281,12 @@ func unmarshalConfig() error {
 	return nil
 }
 
-func bindEnvsAndSetDefaults() error {
-	el := reflect.TypeOf(cfg).Elem()
-	return processStructFields(el, "")
+func (w *Wonsz) bindEnvsAndSetDefaults() error {
+	el := reflect.TypeOf(w.cfg).Elem()
+	return w.processStructFields(el, "")
 }
 
-func processStructFields(t reflect.Type, prefix string) error {
+func (w *Wonsz) processStructFields(t reflect.Type, prefix string) error {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 
@@ -268,7 +303,7 @@ func processStructFields(t reflect.Type, prefix string) error {
 			nestedType = nestedType.Elem()
 		}
 		if isNestedStruct(nestedType) {
-			err := processStructFields(nestedType, mapping)
+			err := w.processStructFields(nestedType, mapping)
 			if err != nil {
 				return err
 			}
@@ -277,9 +312,9 @@ func processStructFields(t reflect.Type, prefix string) error {
 
 		defaultVal := field.Tag.Get("default")
 		if defaultVal != "" {
-			viper.SetDefault(mapping, defaultVal)
+			w.viper.SetDefault(mapping, defaultVal)
 		} else {
-			err := viper.BindEnv(mapping)
+			err := w.viper.BindEnv(mapping)
 			if err != nil {
 				return err
 			}
