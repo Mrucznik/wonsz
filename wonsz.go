@@ -39,7 +39,8 @@ type ConfigOpts struct {
 	// Pass own viper instance. Default is a global viper instance.
 	Viper *globalViper.Viper
 
-	// If true, Wonsz will not return an error if a config field cannot be bound to a flag.
+	// If true, Wonsz will not return an error if a config field cannot be bound to a flag
+	// or the resulting flag cannot be bound to viper. Such fields are silently skipped.
 	IgnoreViperBindErrors bool
 }
 
@@ -143,7 +144,10 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 		}
 		err = viper.BindPFlag(mappingName, targetFlag)
 		if err != nil {
-			return err
+			if cfgOpts.IgnoreViperBindErrors {
+				continue
+			}
+			return fmt.Errorf("cannot bind flag %s to viper key %s: %w", dashedName, mappingName, err)
 		}
 	}
 	return nil
