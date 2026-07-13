@@ -64,7 +64,7 @@ It creates a configuration struct that fields are automatically bound to:
 
 ## How to install?
 
-Import dependency into your project.
+Requires Go 1.25 or newer. Import dependency into your project.
 
 ```shell
 go get github.com/Mrucznik/wonsz
