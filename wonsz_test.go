@@ -2,6 +2,7 @@ package wonsz
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"testing"
@@ -113,6 +114,53 @@ func Test_BindConfig_customMapstructureTag(t *testing.T) {
 
 	if testConfig.FieldOne != "from-flag" {
 		t.Errorf("FieldOne: got %q, want %q", testConfig.FieldOne, "from-flag")
+	}
+}
+
+func Test_BindConfig_ipFieldsFromEnv(t *testing.T) {
+	t.Setenv("SERVER_IP", "192.168.1.10")
+	t.Setenv("SERVER_SUBNET", "10.0.0.0/8")
+
+	var testConfig struct {
+		ServerIp     net.IP
+		ServerSubnet net.IPNet
+	}
+
+	err := BindConfig(&testConfig, nil, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := testConfig.ServerIp.String(), "192.168.1.10"; got != want {
+		t.Errorf("ServerIp: got %q, want %q", got, want)
+	}
+	if got, want := testConfig.ServerSubnet.String(), "10.0.0.0/8"; got != want {
+		t.Errorf("ServerSubnet: got %q, want %q", got, want)
+	}
+}
+
+func Test_BindConfig_ipFieldsFromFlags(t *testing.T) {
+	var testConfig struct {
+		ServerIp     net.IP
+		ServerSubnet net.IPNet
+	}
+
+	cmd := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	err := BindConfig(&testConfig, cmd, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmd.SetArgs([]string{"--server-ip", "172.16.0.1", "--server-subnet", "192.168.0.0/16"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := testConfig.ServerIp.String(), "172.16.0.1"; got != want {
+		t.Errorf("ServerIp: got %q, want %q", got, want)
+	}
+	if got, want := testConfig.ServerSubnet.String(), "192.168.0.0/16"; got != want {
+		t.Errorf("ServerSubnet: got %q, want %q", got, want)
 	}
 }
 

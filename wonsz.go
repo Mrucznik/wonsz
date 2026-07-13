@@ -116,10 +116,7 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 		}
 
 		// Handle nested structs (excluding special types like time.Time)
-		if field.Type.Kind() == reflect.Struct &&
-			field.Type != reflect.TypeOf(time.Time{}) &&
-			field.Type != reflect.TypeOf(net.IP{}) &&
-			field.Type != reflect.TypeOf(net.IPNet{}) {
+		if isNestedStruct(field.Type) {
 			if err := bindFieldsRecursive(flags, field.Type, dashedName, mappingName); err != nil {
 				return err
 			}
@@ -153,6 +150,39 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 	return nil
 }
 
+// isNestedStruct reports whether t is a struct that should be recursed into
+// when binding fields, as opposed to leaf types like time.Time or net.IPNet
+// that are bound as single values.
+func isNestedStruct(t reflect.Type) bool {
+	if t.Kind() != reflect.Struct {
+		return false
+	}
+	// Compare with ConvertibleTo instead of type identity, because the retagged
+	// config type may contain structurally identical copies of these types
+	// (struct tags are ignored in convertibility checks).
+	if t.ConvertibleTo(reflect.TypeOf(time.Time{})) || t.ConvertibleTo(reflect.TypeOf(net.IPNet{})) {
+		return false
+	}
+	return true
+}
+
+// stringToRetaggedIPNetHookFunc works like mapstructure.StringToIPNetHookFunc,
+// but also matches the structurally identical copy of net.IPNet that retag
+// produces inside the retagged config type.
+func stringToRetaggedIPNetHookFunc() mapstructure.DecodeHookFuncType {
+	ipNetType := reflect.TypeOf(net.IPNet{})
+	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String || t.Kind() != reflect.Struct || !t.ConvertibleTo(ipNetType) {
+			return data, nil
+		}
+		_, ipNet, err := net.ParseCIDR(data.(string))
+		if err != nil {
+			return nil, err
+		}
+		return reflect.ValueOf(*ipNet).Convert(t).Interface(), nil
+	}
+}
+
 func initializeViper() error {
 	viper.SetEnvPrefix(cfgOpts.EnvPrefix)
 
@@ -178,6 +208,8 @@ func initializeViper() error {
 
 	if err = viper.Unmarshal(&cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
 		mapstructure.StringToTimeDurationHookFunc(),
+		mapstructure.StringToIPHookFunc(),
+		stringToRetaggedIPNetHookFunc(),
 		mapstructure.StringToSliceHookFunc(","),
 		mapstructure.StringToTimeHookFunc(time.RFC3339),
 	))); err != nil {
@@ -203,14 +235,12 @@ func processStructFields(t reflect.Type, prefix string) error {
 			mapping = prefix + "." + mapping
 		}
 
-		if field.Type.Kind() == reflect.Struct {
-			if field.Type.String() != "time.Time" {
-				err := processStructFields(field.Type, mapping)
-				if err != nil {
-					return err
-				}
-				continue
+		if isNestedStruct(field.Type) {
+			err := processStructFields(field.Type, mapping)
+			if err != nil {
+				return err
 			}
+			continue
 		}
 
 		defaultVal := field.Tag.Get("default")
@@ -261,12 +291,10 @@ func bindPFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, shor
 	case reflect.Bool:
 		flags.BoolP(dashedName, shortcut, false, usageHint)
 	case reflect.Struct:
-		switch field.Type {
-		case reflect.TypeOf(time.Time{}):
+		switch {
+		case field.Type.ConvertibleTo(reflect.TypeOf(time.Time{})):
 			flags.TimeP(dashedName, shortcut, time.Time{}, []string{time.RFC3339}, usageHint)
-		case reflect.TypeOf(net.IP{}):
-			flags.IPP(dashedName, shortcut, net.IP{}, usageHint)
-		case reflect.TypeOf(net.IPNet{}):
+		case field.Type.ConvertibleTo(reflect.TypeOf(net.IPNet{})):
 			flags.IPNetP(dashedName, shortcut, net.IPNet{}, usageHint)
 		default:
 			return fmt.Errorf("unsupported flag %s type: %s", dashedName, field.Type.String())
@@ -291,7 +319,11 @@ func bindPFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, shor
 		case reflect.Uint:
 			flags.UintSliceP(dashedName, shortcut, []uint{}, usageHint)
 		case reflect.Uint8:
-			flags.BytesHexP(dashedName, shortcut, []byte{}, usageHint)
+			if field.Type == reflect.TypeOf(net.IP{}) {
+				flags.IPP(dashedName, shortcut, net.IP{}, usageHint)
+			} else {
+				flags.BytesHexP(dashedName, shortcut, []byte{}, usageHint)
+			}
 		case reflect.Float32:
 			flags.Float32SliceP(dashedName, shortcut, []float32{}, usageHint)
 		case reflect.Float64:
