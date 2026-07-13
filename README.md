@@ -191,6 +191,48 @@ func init() {
 - environment variables are in SCREAMING_SNAKE_CASE
 - command-line flags names should be dash-separated
 
-## Detailed configuration options
+## Supported field types
+
+Strings, booleans, all int/uint/float variants, `time.Duration`, `time.Time` (RFC 3339),
+`net.IP`, `net.IPNet`, string/int/float slices, string arrays, and `map[string]string`/`map[string]int`/`map[string]int64`.
+
+Nested structs (also behind pointers) are fully supported — their fields get prefixed
+names, e.g. `Server.Port` becomes `server.port` in the file, `SERVER_PORT` in env,
+and `--server-port` on the command line.
+
+## Field tags
+
+All tags are optional:
+
+| Tag | Effect |
+|-----|--------|
+| `mapstructure:"custom_name"` | Overrides the derived name for all bindings (flag becomes `--custom-name`). |
+| `default:"value"` | Default value used when no source provides one. |
+| `usage:"help text"` | Usage string shown in `--help` for the flag. |
+| `shortcut:"p"` | Single-character flag shorthand, e.g. `-p`. |
+| `wonsz-flag-ignore:"true"` | Skips binding the field to a command-line flag (env and file still work). |
+| `wonsz:"-"` | Excludes the field from all bindings entirely. |
+
+## Configuration options
+
+`ConfigOpts` fields:
+
+- `EnvPrefix` — prefix for environment variables (`"WONSZ"` → `WONSZ_SNAKE_NAME`).
+- `ConfigPaths`, `ConfigType`, `ConfigName` — where and how to look for the config file.
+- `Viper` — pass your own viper instance (defaults to the global one).
+- `IgnoreViperBindErrors` — skip fields that cannot be bound to flags instead of returning an error.
+- `WatchConfig` — watch the config file and re-unmarshal the struct when it changes.
+
+## Multiple configs
+
+`wonsz.BindConfig` uses a package-level default instance. If you need several
+independent configs, use `wonsz.New`, which returns a `*wonsz.Wonsz` instance
+with its own `Get()` and `Viper()`:
+
+```go
+w, err := wonsz.New(&cfg, rootCmd, wonsz.ConfigOpts{Viper: viper.New()})
+```
+
+## More examples
 
 You can find more information by checking out [example app](example/example.go).
