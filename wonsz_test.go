@@ -296,12 +296,22 @@ func Test_BindConfig_watchConfig(t *testing.T) {
 		WatchedField string
 	}
 
+	// The reload happens on a background goroutine, so the config value is read
+	// inside the OnConfigChange callback (same goroutine as the re-unmarshal)
+	// and handed to the test through a channel.
+	reloaded := make(chan string, 8)
+
 	err := BindConfig(&testConfig, nil, ConfigOpts{
 		ConfigPaths: []string{dir},
 		ConfigType:  "json",
 		ConfigName:  "config",
 		Viper:       globalViper.New(),
 		WatchConfig: true,
+		OnConfigChange: func(err error) {
+			if err == nil {
+				reloaded <- testConfig.WatchedField
+			}
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -314,14 +324,17 @@ func Test_BindConfig_watchConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
-		if testConfig.WatchedField == "updated" {
-			return
+	deadline := time.After(3 * time.Second)
+	for {
+		select {
+		case got := <-reloaded:
+			if got == "updated" {
+				return
+			}
+		case <-deadline:
+			t.Fatal("timed out waiting for config reload after file change")
 		}
-		time.Sleep(50 * time.Millisecond)
 	}
-	t.Errorf("WatchedField: got %q, want %q after config file change", testConfig.WatchedField, "updated")
 }
 
 func TestNewIndependentInstances(t *testing.T) {

@@ -57,6 +57,11 @@ type ConfigOpts struct {
 	// when the file changes. Note that the struct is updated from a background
 	// goroutine, so guard access to it if your application reads it concurrently.
 	WatchConfig bool
+
+	// Called after each WatchConfig reload with the re-unmarshal result.
+	// Runs on the watcher goroutine, right after the config struct is updated,
+	// so it is a safe synchronization point for reacting to config changes.
+	OnConfigChange func(err error)
 }
 
 // Get returns the config struct instance passed to BindConfig.
@@ -260,7 +265,10 @@ func (w *Wonsz) initializeViper() error {
 
 	if w.opts.WatchConfig {
 		w.viper.OnConfigChange(func(fsnotify.Event) {
-			_ = w.unmarshalConfig()
+			unmarshalErr := w.unmarshalConfig()
+			if w.opts.OnConfigChange != nil {
+				w.opts.OnConfigChange(unmarshalErr)
+			}
 		})
 		w.viper.WatchConfig()
 	}
