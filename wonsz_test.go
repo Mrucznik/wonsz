@@ -166,26 +166,35 @@ func Test_BindConfig_ipFieldsFromFlags(t *testing.T) {
 	}
 }
 
-func TestGetReturnsOriginalPointer(t *testing.T) {
+func TestGetReturnsTypedPointer(t *testing.T) {
 	t.Setenv("MY_FIELD", "from-env")
 
 	type conf struct{ MyField string }
 	var c conf
 
-	err := BindConfig(&c, nil, ConfigOpts{Viper: globalViper.New()})
+	w, err := New(&c, nil, ConfigOpts{Viper: globalViper.New()})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	got, ok := Get().(*conf)
-	if !ok {
-		t.Fatalf("Get() returned %T, want *conf", Get())
-	}
+	got := w.Get() // typed *conf, no type assertion needed
 	if got != &c {
-		t.Error("Get() should return the same pointer that was passed to BindConfig")
+		t.Error("Get() should return the same pointer that was passed to New")
 	}
 	if got.MyField != "from-env" {
 		t.Errorf("MyField: got %q, want %q", got.MyField, "from-env")
+	}
+}
+
+func TestNewRejectsNonStruct(t *testing.T) {
+	var notAStruct int
+	if _, err := New(&notAStruct, nil, ConfigOpts{Viper: globalViper.New()}); err == nil {
+		t.Error("expected an error for a non-struct config type, got nil")
+	}
+
+	var nilConfig *struct{ Field string }
+	if _, err := New(nilConfig, nil, ConfigOpts{Viper: globalViper.New()}); err == nil {
+		t.Error("expected an error for a nil config pointer, got nil")
 	}
 }
 
@@ -375,8 +384,8 @@ func TestNewIndependentInstances(t *testing.T) {
 	if b.SecondField != "second" {
 		t.Errorf("SecondField: got %q, want %q", b.SecondField, "second")
 	}
-	if got, ok := wA.Get().(*confA); !ok || got != &a {
-		t.Errorf("wA.Get() should return the bound *confA pointer, got %T", wA.Get())
+	if wA.Get() != &a {
+		t.Error("wA.Get() should return the bound *confA pointer")
 	}
 	if wA.Viper() == wB.Viper() {
 		t.Error("instances should keep separate viper instances")

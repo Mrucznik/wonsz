@@ -15,18 +15,15 @@ import (
 	globalViper "github.com/spf13/viper"
 )
 
-// Wonsz binds a single configuration struct to a config file, environment
-// variables and cobra command flags. Create instances with New; each instance
-// keeps its own options and viper, so multiple configs can coexist.
-type Wonsz struct {
+// Wonsz binds a single configuration struct of type T to a config file,
+// environment variables and cobra command flags. Create instances with New;
+// each instance keeps its own options and viper, so multiple configs can coexist.
+type Wonsz[T any] struct {
 	opts        ConfigOpts
 	cfg         interface{} // retagged copy sharing memory with originalCfg
-	originalCfg interface{}
+	originalCfg *T
 	viper       *globalViper.Viper
 }
-
-// defaultWonsz backs the package-level BindConfig/Get/GetViper API.
-var defaultWonsz *Wonsz
 
 // ConfigOpts provide additional options to configure Wonsz.
 type ConfigOpts struct {
@@ -64,44 +61,29 @@ type ConfigOpts struct {
 	OnConfigChange func(err error)
 }
 
-// Get returns the config struct instance passed to BindConfig.
-// The result can be type-asserted back to the original pointer type.
-func Get() interface{} {
-	if defaultWonsz == nil {
-		return nil
-	}
-	return defaultWonsz.Get()
-}
-
-// GetViper returns a viper instance used by Wonsz.
-func GetViper() *globalViper.Viper {
-	if defaultWonsz == nil {
-		return nil
-	}
-	return defaultWonsz.Viper()
-}
-
-// BindConfig binds configuration structure to config file, environment variables and cobra command flags.
-// The config parameter should be a pointer to the configuration structure.
+// BindConfig binds the configuration structure to a config file, environment
+// variables and cobra command flags. It is a convenience wrapper around New
+// for callers that do not need the returned instance.
 // You can pass nil to rootCmd if you don't want to bind cobra command flags with config.
-// It uses a package-level default instance; to bind multiple independent configs use New.
-func BindConfig(config interface{}, rootCmd *cobra.Command, options ConfigOpts) error {
-	w, err := New(config, rootCmd, options)
-	if w != nil {
-		defaultWonsz = w
-	}
+func BindConfig[T any](config *T, rootCmd *cobra.Command, options ConfigOpts) error {
+	_, err := New(config, rootCmd, options)
 	return err
 }
 
-// New binds the configuration structure like BindConfig, but returns an
-// independent Wonsz instance instead of using package-level state.
-func New(config interface{}, rootCmd *cobra.Command, options ConfigOpts) (*Wonsz, error) {
-	if reflect.TypeOf(config).Kind() != reflect.Ptr || reflect.TypeOf(config).Elem().Kind() != reflect.Struct {
-		return nil, fmt.Errorf("config parameter is not a pointer to a structure. Maybe you should use & operator")
+// New binds the configuration structure to a config file, environment variables
+// and cobra command flags, and returns an independent Wonsz instance.
+// The config parameter must be a non-nil pointer to a struct.
+// You can pass nil to rootCmd if you don't want to bind cobra command flags with config.
+func New[T any](config *T, rootCmd *cobra.Command, options ConfigOpts) (*Wonsz[T], error) {
+	if config == nil {
+		return nil, fmt.Errorf("config parameter is nil")
+	}
+	if reflect.TypeFor[T]().Kind() != reflect.Struct {
+		return nil, fmt.Errorf("config parameter is not a pointer to a structure")
 	}
 
 	// prepare for processing
-	w := &Wonsz{opts: options, originalCfg: config}
+	w := &Wonsz[T]{opts: options, originalCfg: config}
 	if options.Viper != nil {
 		w.viper = options.Viper
 	} else {
@@ -124,17 +106,16 @@ func New(config interface{}, rootCmd *cobra.Command, options ConfigOpts) (*Wonsz
 }
 
 // Get returns the config struct instance passed to New.
-// The result can be type-asserted back to the original pointer type.
-func (w *Wonsz) Get() interface{} {
+func (w *Wonsz[T]) Get() *T {
 	return w.originalCfg
 }
 
 // Viper returns the viper instance used by this Wonsz instance.
-func (w *Wonsz) Viper() *globalViper.Viper {
+func (w *Wonsz[T]) Viper() *globalViper.Viper {
 	return w.viper
 }
 
-func (w *Wonsz) bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappingPrefix string) error {
+func (w *Wonsz[T]) bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappingPrefix string) error {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		if field.Anonymous {
@@ -240,7 +221,7 @@ func stringToRetaggedIPNetHookFunc() mapstructure.DecodeHookFuncType {
 	}
 }
 
-func (w *Wonsz) initializeViper() error {
+func (w *Wonsz[T]) initializeViper() error {
 	w.viper.SetEnvPrefix(w.opts.EnvPrefix)
 
 	for _, path := range w.opts.ConfigPaths {
@@ -276,7 +257,7 @@ func (w *Wonsz) initializeViper() error {
 	return w.unmarshalConfig()
 }
 
-func (w *Wonsz) unmarshalConfig() error {
+func (w *Wonsz[T]) unmarshalConfig() error {
 	if err := w.viper.Unmarshal(&w.cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
 		mapstructure.StringToTimeDurationHookFunc(),
 		mapstructure.StringToIPHookFunc(),
@@ -289,12 +270,12 @@ func (w *Wonsz) unmarshalConfig() error {
 	return nil
 }
 
-func (w *Wonsz) bindEnvsAndSetDefaults() error {
+func (w *Wonsz[T]) bindEnvsAndSetDefaults() error {
 	el := reflect.TypeOf(w.cfg).Elem()
 	return w.processStructFields(el, "")
 }
 
-func (w *Wonsz) processStructFields(t reflect.Type, prefix string) error {
+func (w *Wonsz[T]) processStructFields(t reflect.Type, prefix string) error {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 
