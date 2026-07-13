@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 	globalViper "github.com/spf13/viper"
@@ -281,6 +283,45 @@ func Test_BindConfig_wonszDashExcludesField(t *testing.T) {
 	if testConfig.Included != "from-env" {
 		t.Errorf("Included: got %q, want %q", testConfig.Included, "from-env")
 	}
+}
+
+func Test_BindConfig_watchConfig(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+	if err := os.WriteFile(path, []byte(`{"watched_field": "initial"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var testConfig struct {
+		WatchedField string
+	}
+
+	err := BindConfig(&testConfig, nil, ConfigOpts{
+		ConfigPaths: []string{dir},
+		ConfigType:  "json",
+		ConfigName:  "config",
+		Viper:       globalViper.New(),
+		WatchConfig: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if testConfig.WatchedField != "initial" {
+		t.Fatalf("WatchedField: got %q, want %q", testConfig.WatchedField, "initial")
+	}
+
+	if err := os.WriteFile(path, []byte(`{"watched_field": "updated"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if testConfig.WatchedField == "updated" {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Errorf("WatchedField: got %q, want %q after config file change", testConfig.WatchedField, "updated")
 }
 
 func Test_BindConfig_withFlag(t *testing.T) {

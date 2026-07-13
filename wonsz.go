@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sevlyar/retag"
 	"github.com/spf13/cobra"
@@ -43,6 +44,11 @@ type ConfigOpts struct {
 	// If true, Wonsz will not return an error if a config field cannot be bound to a flag
 	// or the resulting flag cannot be bound to viper. Such fields are silently skipped.
 	IgnoreViperBindErrors bool
+
+	// If true, Wonsz watches the config file and re-unmarshals the config struct
+	// when the file changes. Note that the struct is updated from a background
+	// goroutine, so guard access to it if your application reads it concurrently.
+	WatchConfig bool
 }
 
 // Get returns the config struct instance passed to BindConfig.
@@ -217,7 +223,18 @@ func initializeViper() error {
 		}
 	}
 
-	if err = viper.Unmarshal(&cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
+	if cfgOpts.WatchConfig {
+		viper.OnConfigChange(func(fsnotify.Event) {
+			_ = unmarshalConfig()
+		})
+		viper.WatchConfig()
+	}
+
+	return unmarshalConfig()
+}
+
+func unmarshalConfig() error {
+	if err := viper.Unmarshal(&cfg, globalViper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
 		mapstructure.StringToTimeDurationHookFunc(),
 		mapstructure.StringToIPHookFunc(),
 		stringToRetaggedIPNetHookFunc(),
