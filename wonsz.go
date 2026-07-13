@@ -125,8 +125,8 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 				continue
 			}
 			return fmt.Errorf("cannot bind flag %s: %w. "+
-				"You can ignore this error by setting IgnoreViperBindErrors to true"+
-				"or adding wonsz-flag-ignore annotation to field", dashedName, err)
+				"You can ignore this error by setting IgnoreViperBindErrors to true "+
+				"or by adding the wonsz-flag-ignore annotation to the field", dashedName, err)
 		}
 
 		targetFlag := flags.Lookup(dashedName)

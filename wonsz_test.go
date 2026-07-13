@@ -3,6 +3,7 @@ package wonsz
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -52,6 +53,20 @@ func Test_BindConfig_withEnv(t *testing.T) {
 		testConfig.SliceField[1] != "text" ||
 		testConfig.SliceField[2] != "here" {
 		t.Errorf("Expected %s, got %s", "some", testConfig.SliceField[0])
+	}
+}
+
+func Test_BindConfig_unsupportedTypeErrorMessage(t *testing.T) {
+	var testConfig struct {
+		Unsupported complex128
+	}
+
+	err := BindConfig(&testConfig, &cobra.Command{}, ConfigOpts{})
+	if err == nil {
+		t.Fatal("expected an error for unsupported field type, got nil")
+	}
+	if !strings.Contains(err.Error(), "IgnoreViperBindErrors to true or by adding") {
+		t.Errorf("malformed error message: %q", err.Error())
 	}
 }
 
