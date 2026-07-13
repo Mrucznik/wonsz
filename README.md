@@ -210,7 +210,7 @@ All tags are optional:
 | `default:"value"` | Default value used when no source provides one. |
 | `usage:"help text"` | Usage string shown in `--help` for the flag. |
 | `shortcut:"p"` | Single-character flag shorthand, e.g. `-p`. |
-| `wonsz-flag-ignore:"true"` | Skips binding the field to a command-line flag (env and file still work). |
+| `wonsz:"flag-ignore"` | Skips binding the field to a command-line flag (env and file still work). |
 | `wonsz:"-"` | Excludes the field from all bindings entirely. |
 
 ## Configuration options

@@ -74,23 +74,34 @@ func Test_BindConfig_unsupportedTypeErrorMessage(t *testing.T) {
 	}
 }
 
-func Test_BindConfig_flagIgnoreTagValue(t *testing.T) {
+func Test_BindConfig_flagIgnoreTag(t *testing.T) {
+	t.Setenv("SKIPPED", "from-env")
+
 	var testConfig struct {
-		Kept    string `wonsz-flag-ignore:"false"`
-		Skipped string `wonsz-flag-ignore:"true"`
+		Kept    string
+		Skipped string `wonsz:"flag-ignore"`
 	}
 
-	cmd := &cobra.Command{}
-	err := BindConfig(&testConfig, cmd, ConfigOpts{})
+	cmd := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	err := BindConfig(&testConfig, cmd, ConfigOpts{Viper: globalViper.New()})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if cmd.PersistentFlags().Lookup("kept") == nil {
-		t.Error(`field with wonsz-flag-ignore:"false" should be bound to a flag`)
+		t.Error("field without ignore tag should be bound to a flag")
 	}
 	if cmd.PersistentFlags().Lookup("skipped") != nil {
-		t.Error(`field with wonsz-flag-ignore:"true" should not be bound to a flag`)
+		t.Error(`field with wonsz:"flag-ignore" should not be bound to a flag`)
+	}
+
+	// env binding must still work for a flag-ignored field
+	cmd.SetArgs([]string{})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if testConfig.Skipped != "from-env" {
+		t.Errorf("Skipped: got %q, want %q (env should still bind)", testConfig.Skipped, "from-env")
 	}
 }
 

@@ -122,7 +122,7 @@ func (w *Wonsz[T]) bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, nam
 			continue
 		}
 
-		if field.Tag.Get("wonsz-flag-ignore") == "true" {
+		if field.Tag.Get("wonsz") == "flag-ignore" {
 			continue
 		}
 
@@ -170,7 +170,7 @@ func (w *Wonsz[T]) bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, nam
 			}
 			return fmt.Errorf("cannot bind flag %s: %w. "+
 				"You can ignore this error by setting IgnoreFlagBindErrors to true "+
-				"or by adding the wonsz-flag-ignore annotation to the field", dashedName, err)
+				"or by adding the wonsz:\"flag-ignore\" tag to the field", dashedName, err)
 		}
 
 		targetFlag := flags.Lookup(dashedName)

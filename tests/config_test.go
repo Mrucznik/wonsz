@@ -19,7 +19,7 @@ type Config struct {
 
 	Server   ServerConfig
 	Database DatabaseConfig
-	Users    []User `wonsz-flag-ignore:"true"`
+	Users    []User `wonsz:"flag-ignore"`
 }
 
 type ServerConfig struct {
@@ -36,7 +36,7 @@ type TimeoutConfig struct {
 type DatabaseConfig struct {
 	Driver         string
 	MaxConnections int
-	Replicas       []ReplicaConfig `wonsz-flag-ignore:"true"`
+	Replicas       []ReplicaConfig `wonsz:"flag-ignore"`
 }
 
 type ReplicaConfig struct {
