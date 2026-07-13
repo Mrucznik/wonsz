@@ -24,6 +24,12 @@
 - Add `wonsz:"-"` tag to exclude a field from all bindings.
 - Support pointer-to-struct config fields.
 
+### Dependencies
+
+- Update mapstructure to v2.5.0, fsnotify to v1.10.1 and transitive dependencies
+  (viper v1.21.0 and cobra v1.10.2 were already the latest releases).
+- Minimum Go version is now 1.25 (required by updated dependencies).
+
 ### Fixed
 
 - `net.IP`/`net.IPNet` values now decode correctly from env variables and config files.
