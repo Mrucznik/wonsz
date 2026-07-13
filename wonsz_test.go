@@ -458,6 +458,39 @@ func Test_BindConfig_chainsPersistentPreRunE(t *testing.T) {
 	}
 }
 
+func Test_BindConfig_moreSliceFlagTypes(t *testing.T) {
+	var testConfig struct {
+		Durations []time.Duration
+		Bools     []bool
+		Ips       []net.IP
+	}
+
+	cmd := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	err := BindConfig(&testConfig, cmd, ConfigOpts{Viper: globalViper.New()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmd.SetArgs([]string{
+		"--durations", "1s,2s",
+		"--bools", "true,false",
+		"--ips", "10.0.0.1,10.0.0.2",
+	})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(testConfig.Durations) != 2 || testConfig.Durations[0] != time.Second || testConfig.Durations[1] != 2*time.Second {
+		t.Errorf("Durations: got %v, want [1s 2s]", testConfig.Durations)
+	}
+	if len(testConfig.Bools) != 2 || testConfig.Bools[0] != true || testConfig.Bools[1] != false {
+		t.Errorf("Bools: got %v, want [true false]", testConfig.Bools)
+	}
+	if len(testConfig.Ips) != 2 || testConfig.Ips[0].String() != "10.0.0.1" || testConfig.Ips[1].String() != "10.0.0.2" {
+		t.Errorf("Ips: got %v, want [10.0.0.1 10.0.0.2]", testConfig.Ips)
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string

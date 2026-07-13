@@ -236,6 +236,31 @@ func stringToRetaggedIPNetHookFunc() mapstructure.DecodeHookFuncType {
 	}
 }
 
+// stringToIPSliceHookFunc decodes a comma-separated list of IPs into []net.IP.
+// pflag renders ipSlice values as "[a,b]", so surrounding brackets are stripped.
+func stringToIPSliceHookFunc() mapstructure.DecodeHookFuncType {
+	ipSliceType := reflect.TypeOf([]net.IP{})
+	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String || t != ipSliceType {
+			return data, nil
+		}
+		raw := strings.Trim(data.(string), "[]")
+		if raw == "" {
+			return []net.IP{}, nil
+		}
+		parts := strings.Split(raw, ",")
+		ips := make([]net.IP, 0, len(parts))
+		for _, part := range parts {
+			ip := net.ParseIP(strings.TrimSpace(part))
+			if ip == nil {
+				return nil, fmt.Errorf("failed parsing ip %q", part)
+			}
+			ips = append(ips, ip)
+		}
+		return ips, nil
+	}
+}
+
 func (w *Wonsz[T]) initializeViper() error {
 	w.viper.SetEnvPrefix(w.opts.EnvPrefix)
 
@@ -277,6 +302,7 @@ func (w *Wonsz[T]) unmarshalConfig() error {
 		mapstructure.StringToTimeDurationHookFunc(),
 		mapstructure.StringToIPHookFunc(),
 		stringToRetaggedIPNetHookFunc(),
+		stringToIPSliceHookFunc(),
 		mapstructure.StringToSliceHookFunc(","),
 		mapstructure.StringToTimeHookFunc(time.RFC3339),
 	))); err != nil {
@@ -378,15 +404,25 @@ func bindPFlag(flags *pflag.FlagSet, field reflect.StructField, dashedName, shor
 				dashedName, field.Type.String())
 		}
 	case reflect.Slice:
+		if field.Type.Elem() == reflect.TypeOf(net.IP{}) {
+			flags.IPSliceP(dashedName, shortcut, []net.IP{}, usageHint)
+			return nil
+		}
 		switch field.Type.Elem().Kind() {
 		case reflect.String:
 			flags.StringSliceP(dashedName, shortcut, []string{}, usageHint)
+		case reflect.Bool:
+			flags.BoolSliceP(dashedName, shortcut, []bool{}, usageHint)
 		case reflect.Int:
 			flags.IntSliceP(dashedName, shortcut, []int{}, usageHint)
 		case reflect.Int32:
 			flags.Int32SliceP(dashedName, shortcut, []int32{}, usageHint)
 		case reflect.Int64:
-			flags.Int64SliceP(dashedName, shortcut, []int64{}, usageHint)
+			if field.Type.Elem() == reflect.TypeOf(time.Duration(0)) {
+				flags.DurationSliceP(dashedName, shortcut, []time.Duration{}, usageHint)
+			} else {
+				flags.Int64SliceP(dashedName, shortcut, []int64{}, usageHint)
+			}
 		case reflect.Uint:
 			flags.UintSliceP(dashedName, shortcut, []uint{}, usageHint)
 		case reflect.Uint8:
