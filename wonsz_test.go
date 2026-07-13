@@ -70,6 +70,26 @@ func Test_BindConfig_unsupportedTypeErrorMessage(t *testing.T) {
 	}
 }
 
+func Test_BindConfig_flagIgnoreTagValue(t *testing.T) {
+	var testConfig struct {
+		Kept    string `wonsz-flag-ignore:"false"`
+		Skipped string `wonsz-flag-ignore:"true"`
+	}
+
+	cmd := &cobra.Command{}
+	err := BindConfig(&testConfig, cmd, ConfigOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cmd.PersistentFlags().Lookup("kept") == nil {
+		t.Error(`field with wonsz-flag-ignore:"false" should be bound to a flag`)
+	}
+	if cmd.PersistentFlags().Lookup("skipped") != nil {
+		t.Error(`field with wonsz-flag-ignore:"true" should not be bound to a flag`)
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string

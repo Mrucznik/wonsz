@@ -91,7 +91,7 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 			continue
 		}
 
-		if field.Tag.Get("wonsz-flag-ignore") != "" {
+		if field.Tag.Get("wonsz-flag-ignore") == "true" {
 			continue
 		}
 
