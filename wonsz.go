@@ -128,6 +128,10 @@ func bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, namePrefix, mappi
 
 		usageHint := field.Tag.Get("usage")
 		shortcut, _ := field.Tag.Lookup("shortcut")
+		if len(shortcut) > 1 {
+			return fmt.Errorf("invalid shortcut %q for field %s: must be a single ASCII character",
+				shortcut, field.Name)
+		}
 		err := bindPFlag(flags, field, dashedName, shortcut, usageHint)
 		if err != nil {
 			if cfgOpts.IgnoreViperBindErrors {

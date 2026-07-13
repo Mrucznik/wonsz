@@ -187,6 +187,20 @@ func TestGetReturnsOriginalPointer(t *testing.T) {
 	}
 }
 
+func Test_BindConfig_invalidShortcut(t *testing.T) {
+	var testConfig struct {
+		Field string `shortcut:"ab"`
+	}
+
+	err := BindConfig(&testConfig, &cobra.Command{}, ConfigOpts{Viper: globalViper.New()})
+	if err == nil {
+		t.Fatal("expected an error for a multi-character shortcut, got nil")
+	}
+	if !strings.Contains(err.Error(), "shortcut") {
+		t.Errorf("error should mention the shortcut tag, got: %q", err.Error())
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string
