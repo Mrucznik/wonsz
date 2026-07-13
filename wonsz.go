@@ -94,12 +94,27 @@ func New[T any](config *T, rootCmd *cobra.Command, options ConfigOpts) (*Wonsz[T
 	if rootCmd == nil { // only viper
 		return w, w.initializeViper()
 	}
-	cobra.OnInitialize(func() {
-		err := w.initializeViper()
-		if err != nil {
-			panic(fmt.Errorf("panic from WONSZ lib: cannot initialize viper: %w", err))
+
+	// Config is read after flag parsing, so initialization is chained into the
+	// root command's PersistentPreRunE (any hook set by the user runs after it).
+	// Note: a subcommand defining its own PersistentPreRun(E) overrides the
+	// root's one and skips this initialization, unless
+	// cobra.EnableTraverseRunHooks is set.
+	prevPreRunE := rootCmd.PersistentPreRunE
+	prevPreRun := rootCmd.PersistentPreRun
+	rootCmd.PersistentPreRun = nil
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if err := w.initializeViper(); err != nil {
+			return fmt.Errorf("wonsz: cannot initialize viper: %w", err)
 		}
-	})
+		if prevPreRunE != nil {
+			return prevPreRunE(cmd, args)
+		}
+		if prevPreRun != nil {
+			prevPreRun(cmd, args)
+		}
+		return nil
+	}
 
 	confType := reflect.TypeOf(w.cfg).Elem()
 	return w, w.bindFieldsRecursive(rootCmd.PersistentFlags(), confType, "", "")

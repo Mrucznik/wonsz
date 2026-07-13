@@ -403,6 +403,61 @@ func TestNewIndependentInstances(t *testing.T) {
 	}
 }
 
+func Test_BindConfig_initErrorReturnedFromExecute(t *testing.T) {
+	var testConfig struct{ Field string }
+
+	cmd := &cobra.Command{
+		Use:           "test",
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		RunE:          func(*cobra.Command, []string) error { return nil },
+	}
+
+	err := BindConfig(&testConfig, cmd, ConfigOpts{
+		ConfigName:  "definitely-missing-config",
+		ConfigPaths: []string{"."},
+		ConfigType:  "json",
+		Viper:       globalViper.New(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmd.SetArgs([]string{})
+	if err := cmd.Execute(); err == nil {
+		t.Error("expected Execute to return an error when the config file is missing, got nil")
+	}
+}
+
+func Test_BindConfig_chainsPersistentPreRunE(t *testing.T) {
+	t.Setenv("CHAIN_FIELD", "from-env")
+
+	var testConfig struct{ ChainField string }
+	var sawValue string
+
+	cmd := &cobra.Command{
+		Use: "test",
+		PersistentPreRunE: func(*cobra.Command, []string) error {
+			sawValue = testConfig.ChainField // config must already be initialized here
+			return nil
+		},
+		RunE: func(*cobra.Command, []string) error { return nil },
+	}
+
+	if err := BindConfig(&testConfig, cmd, ConfigOpts{Viper: globalViper.New()}); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd.SetArgs([]string{})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if sawValue != "from-env" {
+		t.Errorf("user PersistentPreRunE saw %q, want %q", sawValue, "from-env")
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string
