@@ -194,7 +194,8 @@ func init() {
 ## Supported field types
 
 Strings, booleans, all int/uint/float variants, `time.Duration`, `time.Time` (RFC 3339),
-`net.IP`, `net.IPNet`, string/int/float slices, string arrays, and `map[string]string`/`map[string]int`/`map[string]int64`.
+`net.IP`, `net.IPNet`, slices of strings/bools/ints/floats/`time.Duration`/`net.IP`,
+string arrays, and `map[string]string`/`map[string]int`/`map[string]int64`.
 
 Nested structs (also behind pointers) are fully supported — their fields get prefixed
 names, e.g. `Server.Port` becomes `server.port` in the file, `SERVER_PORT` in env,
@@ -223,15 +224,31 @@ All tags are optional:
 - `IgnoreFlagBindErrors` — skip fields that cannot be bound to flags instead of returning an error.
 - `WatchConfig` — watch the config file and re-unmarshal the struct when it changes.
 
-## Multiple configs
+## Typed instances
 
-`wonsz.BindConfig` uses a package-level default instance. If you need several
-independent configs, use `wonsz.New`, which returns a `*wonsz.Wonsz` instance
-with its own `Get()` and `Viper()`:
+`wonsz.New` returns a typed `*wonsz.Wonsz[T]` instance with `Get() *T` (no type
+assertions) and `Viper()`. Instances are independent, so several configs can
+coexist:
 
 ```go
 w, err := wonsz.New(&cfg, rootCmd, wonsz.ConfigOpts{Viper: viper.New()})
+name := w.Get().SnakeName
 ```
+
+`wonsz.BindConfig` is a convenience wrapper for when you keep your own pointer
+to the struct and only need the error.
+
+## Cobra integration notes
+
+Wonsz chains config initialization into the root command's
+`PersistentPreRunE`; your own hook (if any) runs right after it. If a
+subcommand defines its own `PersistentPreRun(E)`, cobra skips the root hook —
+set `cobra.EnableTraverseRunHooks = true` to run both.
+
+## Stability
+
+Wonsz follows semantic versioning. Starting with v1.0.0 the public API is
+stable: breaking changes only happen in a new major version.
 
 ## More examples
 
