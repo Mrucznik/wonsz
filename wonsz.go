@@ -313,12 +313,16 @@ func (w *Wonsz[T]) unmarshalConfig() error {
 
 func (w *Wonsz[T]) bindEnvsAndSetDefaults() error {
 	el := reflect.TypeOf(w.cfg).Elem()
-	return w.processStructFields(el, "")
+	return w.processStructFields(el, reflect.ValueOf(w.cfg).Elem(), "")
 }
 
-func (w *Wonsz[T]) processStructFields(t reflect.Type, prefix string) error {
+func (w *Wonsz[T]) processStructFields(t reflect.Type, v reflect.Value, prefix string) error {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
+		var fieldVal reflect.Value
+		if v.IsValid() {
+			fieldVal = v.Field(i)
+		}
 
 		mapping := strings.Split(field.Tag.Get("mapstructure"), ",")[0]
 		if field.Anonymous || mapping == "" || mapping == "-" {
@@ -331,9 +335,14 @@ func (w *Wonsz[T]) processStructFields(t reflect.Type, prefix string) error {
 		nestedType := field.Type
 		if nestedType.Kind() == reflect.Pointer {
 			nestedType = nestedType.Elem()
+			if fieldVal.IsValid() && !fieldVal.IsNil() {
+				fieldVal = fieldVal.Elem()
+			} else {
+				fieldVal = reflect.Value{}
+			}
 		}
 		if isNestedStruct(nestedType) {
-			err := w.processStructFields(nestedType, mapping)
+			err := w.processStructFields(nestedType, fieldVal, mapping)
 			if err != nil {
 				return err
 			}
@@ -341,9 +350,15 @@ func (w *Wonsz[T]) processStructFields(t reflect.Type, prefix string) error {
 		}
 
 		defaultVal := field.Tag.Get("default")
-		if defaultVal != "" {
+		switch {
+		// A non-zero value already present in the struct is the default;
+		// without an explicit viper default, an unchanged bound flag would
+		// report its zero value and clobber the struct field on unmarshal.
+		case fieldVal.IsValid() && !fieldVal.IsZero():
+			w.viper.SetDefault(mapping, fieldVal.Interface())
+		case defaultVal != "":
 			w.viper.SetDefault(mapping, defaultVal)
-		} else {
+		default:
 			err := w.viper.BindEnv(mapping)
 			if err != nil {
 				return err

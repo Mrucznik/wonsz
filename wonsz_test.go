@@ -543,6 +543,56 @@ func Test_BindConfig_allFlagTypesRegistered(t *testing.T) {
 	}
 }
 
+func TestStructDefaultsSurviveFlagBinding(t *testing.T) {
+	type conf struct {
+		Name  string
+		Count int
+	}
+	c := conf{Name: "struct-default", Count: 7}
+
+	cmd := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	if err := BindConfig(&c, cmd, ConfigOpts{Viper: globalViper.New()}); err != nil {
+		t.Fatal(err)
+	}
+	cmd.SetArgs([]string{})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if c.Name != "struct-default" {
+		t.Errorf("Name: got %q, want %q (flag zero value must not clobber struct default)", c.Name, "struct-default")
+	}
+	if c.Count != 7 {
+		t.Errorf("Count: got %d, want 7", c.Count)
+	}
+}
+
+func TestStructDefaultsOverriddenBySources(t *testing.T) {
+	t.Setenv("COUNT", "11")
+
+	type conf struct {
+		Name  string
+		Count int
+	}
+	c := conf{Name: "struct-default", Count: 7}
+
+	cmd := &cobra.Command{Run: func(*cobra.Command, []string) {}}
+	if err := BindConfig(&c, cmd, ConfigOpts{Viper: globalViper.New()}); err != nil {
+		t.Fatal(err)
+	}
+	cmd.SetArgs([]string{"--name", "from-flag"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if c.Name != "from-flag" {
+		t.Errorf("Name: got %q, want %q (flag must override struct default)", c.Name, "from-flag")
+	}
+	if c.Count != 11 {
+		t.Errorf("Count: got %d, want 11 (env must override struct default)", c.Count)
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string
