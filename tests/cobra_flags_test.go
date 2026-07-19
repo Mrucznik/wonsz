@@ -21,11 +21,11 @@ func TestConfigCobraFlags(t *testing.T) {
 	}
 
 	opts := wonsz.ConfigOpts{
-		EnvPrefix:             "WONSZ",
-		ConfigPaths:           []string{"."},
-		ConfigType:            "json",
-		ConfigName:            "empty_config",
-		Viper:                 viper.New(),
+		EnvPrefix:            "WONSZ",
+		ConfigPaths:          []string{"."},
+		ConfigType:           "json",
+		ConfigName:           "empty_config",
+		Viper:                viper.New(),
 		IgnoreFlagBindErrors: false,
 	}
 

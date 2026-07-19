@@ -491,6 +491,58 @@ func Test_BindConfig_moreSliceFlagTypes(t *testing.T) {
 	}
 }
 
+func Test_BindConfig_allFlagTypesRegistered(t *testing.T) {
+	var testConfig struct {
+		S    string
+		B    bool
+		I    int
+		I8   int8
+		I16  int16
+		I32  int32
+		I64  int64
+		U    uint
+		U8   uint8
+		U16  uint16
+		U32  uint32
+		U64  uint64
+		F32  float32
+		F64  float64
+		D    time.Duration
+		T    time.Time
+		Ip   net.IP
+		Nt   net.IPNet
+		Ss   []string
+		Is   []int
+		I32s []int32
+		I64s []int64
+		Us   []uint
+		Bs   []byte
+		F32s []float32
+		F64s []float64
+		Arr  [2]string
+		Ms   map[string]string
+		Mi   map[string]int
+		Mi32 map[string]int32
+		Mi64 map[string]int64
+	}
+
+	cmd := &cobra.Command{}
+	if err := BindConfig(&testConfig, cmd, ConfigOpts{Viper: globalViper.New()}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{
+		"s", "b", "i", "i-8", "i-16", "i-32", "i-64",
+		"u", "u-8", "u-16", "u-32", "u-64", "f-32", "f-64",
+		"d", "t", "ip", "nt", "ss", "is", "i-32-s", "i-64-s",
+		"us", "bs", "f-32-s", "f-64-s", "arr", "ms", "mi", "mi-32", "mi-64",
+	} {
+		if cmd.PersistentFlags().Lookup(name) == nil {
+			t.Errorf("flag %q not registered", name)
+		}
+	}
+}
+
 func Test_BindConfig_withFlag(t *testing.T) {
 	var testConfig struct {
 		SliceField []string
