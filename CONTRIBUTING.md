@@ -14,7 +14,8 @@ Thanks for your interest in contributing!
 1. Fork and create a feature branch.
 2. Keep commits focused; follow [Conventional Commits](https://www.conventionalcommits.org)
    (`feat:`, `fix:`, `docs:`, ...).
-3. Update `CHANGELOG.md` under the *Unreleased* heading.
+3. Describe user-facing changes in the PR description — release notes are
+   maintained in [GitHub Releases](https://github.com/Mrucznik/wonsz/releases).
 4. Make sure CI is green.
 
 ## Reporting bugs
