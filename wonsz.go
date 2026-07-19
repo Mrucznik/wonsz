@@ -162,7 +162,7 @@ func (w *Wonsz[T]) bindFieldsRecursive(flags *pflag.FlagSet, t reflect.Type, nam
 
 		// Handle nested structs, also behind pointers (excluding special types like time.Time)
 		nestedType := field.Type
-		if nestedType.Kind() == reflect.Ptr {
+		if nestedType.Kind() == reflect.Pointer {
 			nestedType = nestedType.Elem()
 		}
 		if isNestedStruct(nestedType) {
@@ -329,7 +329,7 @@ func (w *Wonsz[T]) processStructFields(t reflect.Type, prefix string) error {
 		}
 
 		nestedType := field.Type
-		if nestedType.Kind() == reflect.Ptr {
+		if nestedType.Kind() == reflect.Pointer {
 			nestedType = nestedType.Elem()
 		}
 		if isNestedStruct(nestedType) {

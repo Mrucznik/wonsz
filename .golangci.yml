@@ -1,0 +1,12 @@
+version: "2"
+
+linters:
+  exclusions:
+    paths:
+      # vendored copy of github.com/sevlyar/retag — kept close to upstream
+      - internal/retag
+    rules:
+      # test structs are inspected via reflection, so their fields look unused
+      - path: _test\.go
+        linters:
+          - unused
