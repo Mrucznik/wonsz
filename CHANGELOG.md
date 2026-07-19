@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.0.0 (2026-07-13)
+
+First stable release. The public API is now covered by semantic versioning:
+breaking changes only in a new major version.
+
+### Breaking changes
+
+- Type-safe generic API: `New[T]` returns `*Wonsz[T]` with typed `Get() *T`.
+  `BindConfig[T]` stays as an error-only convenience wrapper (existing call
+  sites compile unchanged thanks to type inference). Package-level `Get` and
+  `GetViper` are removed — keep the instance returned by `New`.
+- `IgnoreViperBindErrors` renamed to `IgnoreFlagBindErrors` (it always
+  concerned pflag binding, not viper).
+- Field tags unified under the `wonsz` namespace: `wonsz-flag-ignore:"true"`
+  is replaced by `wonsz:"flag-ignore"`; `wonsz:"-"` is unchanged.
+- Config initialization errors are returned from `cmd.Execute()` (chained via
+  the root command's `PersistentPreRunE`) instead of panicking inside
+  `cobra.OnInitialize`. Subcommands defining their own `PersistentPreRun(E)`
+  need `cobra.EnableTraverseRunHooks = true` to keep the root hook running.
+
+### Added
+
+- Support `[]time.Duration`, `[]bool` and `[]net.IP` config fields.
+- Fuzz test for name conversion; godoc package docs and examples.
+- `SECURITY.md`, `CONTRIBUTING.md`, Dependabot config and a release workflow.
+
+### Changed
+
+- `github.com/sevlyar/retag` (unmaintained upstream) is vendored into
+  `internal/retag` (MIT, attribution kept); wonsz no longer depends on it
+  externally.
+
 ## v0.3.0 (2026-07-13)
 
 ### Behavior changes
